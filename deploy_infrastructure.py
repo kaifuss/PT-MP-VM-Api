@@ -26,17 +26,17 @@ def sendAnyPostRequest(requestUrl, headers, data, jsonData, requestType):
     
     except requests.exceptions.HTTPError as err:
         logging.error(f'HTTP-ошибка при выполнении {requestType} запроса на {requestUrl}: {err}')
-        print(f'Произошла ошибка при выполнении запроса. Логи находятся в {logging.filename}')
+        print(f'Произошла ошибка при выполнении запроса. Логи находятся в {loggingFile}')
         return None
 
     except requests.exceptions.RequestException as err:
         logging.error(f'Ошибка отправки запроса на {requestType} на url {requestUrl}: {err}')
-        print(f'Произошла ошибка при выполнении запроса. Логи находятся в {logging.filename}')
+        print(f'Произошла ошибка при выполнении запроса. Логи находятся в {loggingFile}')
         return None
     
     except Exception as err:
         logging.error(f'Неизвестная ошибка при выполнении запроса на {requestType} на url {requestUrl}: {err}')
-        print(f'Произошла ошибка при выполнении запроса. Логи находятся в {logging.filename}')
+        print(f'Произошла ошибка при выполнении запроса. Логи находятся в {loggingFile}')
         return None
 
 #ГЛОБАЛЬНЫЕ || ФУНКЦИЯ универсальная отправки GET запроса 
@@ -57,17 +57,17 @@ def sendAnyGetRequest(requestUrl, headers, data, json_data, requestType):
     
     except requests.exceptions.HTTPError as err:
         logging.error(f'HTTP-ошибка при выполнении запроса на {requestType} на url {requestUrl}: {err}')
-        print(f'Произошла ошибка при выполнении запроса. Логи находятся в {logging.filename}')
+        print(f'Произошла ошибка при выполнении запроса. Логи находятся в {loggingFile}')
         return None
 
     except requests.exceptions.RequestException as err:
         logging.error(f'Ошибка отправки запроса на {requestType} на url {requestUrl}: {err}')
-        print(f'Произошла ошибка при выполнении запроса. Логи находятся в {logging.filename}')
+        print(f'Произошла ошибка при выполнении запроса. Логи находятся в {loggingFile}')
         return None
     
     except Exception as err:
         logging.error(f'Неизвестная ошибка при выполнении запроса на {requestType} на url {requestUrl}: {err}')
-        print(f'Произошла ошибка при выполнении запроса. Логи находятся в {logging.filename}')
+        print(f'Произошла ошибка при выполнении запроса. Логи находятся в {loggingFile}')
         return None
     
 #ГЛОБАЛЬНЫЕ || ФУНКЦИЯ получения токена доступа
