@@ -1,0 +1,9 @@
+Название;Описание;Родительская группа;Тип группы;PDQL фильтр;Доступность;Косвенный ущерб;Конфиденциальность;Целостность;Плотность целей;address;contactUserId;internetProviders;numberOfNodes;registeredDomains;usedNetworkApplications;usedNetworks
+Инфраструктура_2;Все активы организации;Root;static;;ND;ND;ND;ND;ND;;;;;;;
+Windows активы_2;Все Windows активы организации;Инфраструктура_2;static;;L;ND;L;L;ND;;;;;;;
+Windows АРМы_2;Рабочие станции пользователей;Windows активы_2;dynamic;WindowsHost and Host.HostType = 'Desktop';L;ND;L;L;ND;;;;;;;
+Windows Сервера_2;Сервера под управлением Windows ОС;Windows активы_2;dynamic;WindowsHost and Host.HostType = 'Server';L;ND;L;L;ND;;;;;;;
+Сервисы_2;Инфраструктурные сервисы организации;Инфраструктура_2;static;;ND;ND;ND;ND;ND;;;;;;;
+DNS-сервера_2;DNSы;Сервисы_2;dynamic;Host.HostRoles.Role = 'DNS Server';M;ND;H;H;ND;;;;;;;
+Контроллеры домена_2;DC;Сервисы_2;dynamic;Host.HostRoles.Role = 'Domain Controller';H;ND;M;H;ND;;;;;;;
+СУБД;Хосты, на которых есть средства управления базами данных;Сервисы_2;dynamic;Host.HostRoles.Role = 'Database Server';M;ND;L;M;ND;;;;;;;
