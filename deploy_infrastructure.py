@@ -1,38 +1,42 @@
 #библиотеки
-import requests
+from datetime import datetime
 import csv
+import getpass
 import json
+import logging
+import os
+import requests
 import time
 import urllib3
-import getpass
-import os
 
 #-------------------------------------ГЛОБАЛЬНЫЕ-----------------------------------------#
 #ГЛОБАЛЬНЫЕ || ФУНКЦИЯ универсальная отправки POST запроса 
-def sendAnyPostRequest(requestUrl, headers, data, json_data, requestType):
+def sendAnyPostRequest(requestUrl, headers, data, jsonData, requestType):
     try:
-        print(f'Отправляется запрос на {requestType}')
-        
-        if json_data:
-            response = requests.post(requestUrl, headers=headers, json=json_data, verify=False)
+        if jsonData:
+            logging.info(f'Отправлен POST запрос на {requestType} с JSON данными на url {requestUrl}')
+            response = requests.post(requestUrl, headers=headers, json=jsonData, verify=False)
         else:
+            logging.info(f'Отправлен POST запрос на {requestType} с данными на url {requestUrl}')
             response = requests.post(requestUrl, headers=headers, data=data, verify=False)
-        
         response.raise_for_status()  # Проверка статуса ответа
 
-        print(f'{requestType} запрос на {requestUrl} выполнен успешно.')
+        logging.info(f'Запрос на {requestType} выполнен успешно на url {requestUrl}.')
         return response
     
     except requests.exceptions.HTTPError as err:
-        print(f'HTTP-ошибка при выполнении {requestType} запроса на {requestUrl}: {err}')
+        logging.error(f'HTTP-ошибка при выполнении {requestType} запроса на {requestUrl}: {err}')
+        print(f'Произошла ошибка при выполнении запроса. Логи находятся в {logging.filename}')
         return None
 
     except requests.exceptions.RequestException as err:
-        print(f'Ошибка при выполнении {requestType} запроса на {requestUrl}: {err}')
+        logging.error(f'Ошибка отправки запроса на {requestType} на url {requestUrl}: {err}')
+        print(f'Произошла ошибка при выполнении запроса. Логи находятся в {logging.filename}')
         return None
     
     except Exception as err:
-        print(f'Неизвестная ошибка при выполнении {requestType} запроса на {requestUrl}: {err}')
+        logging.error(f'Неизвестная ошибка при выполнении запроса на {requestType} на url {requestUrl}: {err}')
+        print(f'Произошла ошибка при выполнении запроса. Логи находятся в {logging.filename}')
         return None
 
 #ГЛОБАЛЬНЫЕ || ФУНКЦИЯ универсальная отправки GET запроса 
@@ -41,30 +45,34 @@ def sendAnyGetRequest(requestUrl, headers, data, json_data, requestType):
         print(f'Отправляется запрос на {requestType}')
         
         if json_data:
+            logging.info(f'Отправлен GET запрос на {requestType} с JSON данными на url {requestUrl}')
             response = requests.get(requestUrl, headers=headers, json=json_data, verify=False)
         else:
+            logging.info(f'Отправлен GET запрос на {requestType} с данными на url {requestUrl}')
             response = requests.get(requestUrl, headers=headers, data=data, verify=False)
-        
         response.raise_for_status()  # Проверка статуса ответа
 
-        print(f'Запрос на {requestType} выполнен успешно.')
+        logging.info(f'Запрос на {requestType} выполнен успешно на url {requestUrl}.')
         return response
     
     except requests.exceptions.HTTPError as err:
-        print(f'HTTP-ошибка при выполнении {requestType} запроса на {requestUrl}: {err}')
+        logging.error(f'HTTP-ошибка при выполнении запроса на {requestType} на url {requestUrl}: {err}')
+        print(f'Произошла ошибка при выполнении запроса. Логи находятся в {logging.filename}')
         return None
 
     except requests.exceptions.RequestException as err:
-        print(f'Ошибка при выполнении {requestType} запроса на {requestUrl}: {err}')
+        logging.error(f'Ошибка отправки запроса на {requestType} на url {requestUrl}: {err}')
+        print(f'Произошла ошибка при выполнении запроса. Логи находятся в {logging.filename}')
         return None
     
     except Exception as err:
-        print(f'Неизвестная ошибка при выполнении {requestType} запроса на {requestUrl}: {err}')
+        logging.error(f'Неизвестная ошибка при выполнении запроса на {requestType} на url {requestUrl}: {err}')
+        print(f'Произошла ошибка при выполнении запроса. Логи находятся в {logging.filename}')
         return None
     
-
 #ГЛОБАЛЬНЫЕ || ФУНКЦИЯ получения токена доступа
 def getTokenMpx():
+    logging.info('Функция getTokenMpx запущена')
 
     #ввод логина и пароля
     while True: 
@@ -72,18 +80,20 @@ def getTokenMpx():
         adminPassword = getpass.getpass('Введите пароль пользователя MP10: ')
         adminPasswordCheck = getpass.getpass('Повторите пароль пользователя MP10: ')
         if adminPassword != adminPasswordCheck:
+            logging.error('Пароли при вводе не совпали.')
             print('Пароли не совпадают. Повторите попытку.')
             continue
         else:
+            logging.info('Логин и пароль пользователя MP10 введены верно')
             break
     #ввод clientSecret
+    logging.info('Введен clientSecret.')
     clientSecret = input('Введите clientSecret: ') 
 
-    #заголовки
+    #заголовки запроса
     headersOfRequest = {
         'Content-Type': 'application/x-www-form-urlencoded',
     }
-
     #тело запроса
     dataGetAuthToken = {
         'username': adminName,
@@ -94,13 +104,14 @@ def getTokenMpx():
         'response_type':'token',
         'scope':'mpx.api',
     }
-
-    #запрос
-    getAuthToken = sendAnyPostRequest(rootUrl + ':3334/connect/token', headersOfRequest, dataGetAuthToken, None, 'получение токена доступа')
+    #отправка запроса
+    getAuthToken = sendAnyPostRequest(rootUrl + ':3334/connect/token', headersOfRequest, dataGetAuthToken, None, 'получение токена доступа для mpx')
     
     if getAuthToken is None:
+        logging.error('Не удалось получить токен доступа. Вернулся объект None')
         return None
     else:
+        logging.info('Токен доступа получен.')
         return getAuthToken.json()['access_token']
 
 #-------------------------------------ГРУППЫ АКТИВОВ-------------------------------------#
@@ -124,7 +135,6 @@ def getGroupID(parentName):
     else:
         print(f"Родительская группа {parentName} имеет ID: {parentGroupId}")
     return parentGroupId
-
 
 #ГРУППЫ АКТИВОВ || ФУНКЦИЯ рекурсивного поиска группы в подгруппах
 def findGroupIdRecursive(groupsData, targetGroupName):
@@ -352,34 +362,44 @@ def createPdqlQueries(querriesCsvFile):
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 #глобальные переменные
-bearerToken = ''                                    #токен MP10 Core
-werePqlGroupsCreated = False                        #флаг создания групп PDQL запросов нужен для PDQL запросов
+bearerToken = ''                        #токен MP10 Core
+werePqlGroupsCreated = False            #флаг создания групп PDQL запросов нужен для PDQL запросов
 
-#получение пути к файлам манифестам
+#установление пути к файлам манифестам
 currentDirectory = os.path.dirname(os.path.abspath(__file__))                           #текущая директория
 manifestsDirectory = os.path.join(currentDirectory, 'deployment_manifests')             #директория с манифестами
-groupsCsvFile = os.path.join(manifestsDirectory, "assets_groups_manifest.csv")                 #манифест с настройками групп активов
+groupsCsvFile = os.path.join(manifestsDirectory, "assets_groups_manifest.csv")          #манифест с настройками групп активов
 querriesGroupsCsvFile = os.path.join(manifestsDirectory, "pdql_groups_manifest.csv")    #манифест с настройками групп PDQL запросов
 querriesCsvFile = os.path.join(manifestsDirectory, "pdql_manifest.csv")                 #манифест с настройками PDQL запросов
 querriesGroupsCsvFile = os.path.join(manifestsDirectory, "groupsOfQuerries.json")       #файл, куда скачаваем информацию о группах PDQL запросов
 
+#логирование ошибок
+loggingDirectory = os.path.join(currentDirectory, 'logging')        #директория с логами
+loggingFile = f"main-{datetime.now().strftime('%d-%m-%Y-%H-%M-%S')}-log.log"
+logging.basicConfig(
+    filename=os.path.join(loggingDirectory, loggingFile),
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+)
+
 #запрос корневой uRL и получение токена
 print('--------------------------Добро пожаловать----------------------------')
 rootUrl = 'https://' + input('Введите адрес MP10 Core: https://')
+logging.info('Вызов функции получения токена getTokenMpx')
 bearerToken = getTokenMpx()
 
 #создание групп активов
-print('--------------------------Группы активов-----------------------------')
+print('--------------------------Группы активов------------------------------')
 print(f'Необходимо ли создать группы активов из {groupsCsvFile} ? Yes/No')
 if(input() == 'Yes'): werePqlGroupsCreated = createAssetsFromCsv(groupsCsvFile)
 
 #создание групп PDQL запросов
-print('--------------------------Группы запросов----------------------------')
+print('--------------------------Группы запросов-----------------------------')
 print(f'Необходимо ли создать группы PDQL запросов из {querriesCsvFile}? Yes/No')
 if(input() == 'Yes'): werePqlGroupsCreated = createPdqlGroups(querriesGroupsCsvFile, querriesCsvFile)
 
 #создание PDQL запросов
-print('--------------------------PDQL запросы-------------------------------')
+print('--------------------------PDQL запросы--------------------------------')
 print(f'Необходимо ли создать PDQL запросы из {querriesCsvFile}? Yes/No')
 if(input() == 'Yes' and werePqlGroupsCreated): createPdqlQueries(querriesCsvFile)
 
