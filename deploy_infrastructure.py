@@ -381,7 +381,9 @@ querriesCsvFile = os.path.join(manifestsDirectory, "pdql_manifest.csv")         
 querriesGroupsCsvFile = os.path.join(manifestsDirectory, "groupsOfQuerries.json")       #файл, куда скачаваем информацию о группах PDQL запросов
 
 #логирование ошибок
-loggingDirectory = os.path.join(currentDirectory, 'logging')                            #директория с логами
+loggingDirectory = os.path.join(currentDirectory, 'logging')                            #установление пути к директории с логами
+if not os.path.exists(loggingDirectory):                                                #создание директории с логами, если ещё нет
+    os.mkdir(loggingDirectory)                                                          #директория с логами
 loggingFile = f"main-{datetime.now().strftime('%d-%m-%Y-%H-%M-%S')}-log.log"            #имя лог файла
 logging.basicConfig(                                                                    #настройка логирования
     filename=os.path.join(loggingDirectory, loggingFile),
