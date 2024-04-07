@@ -135,7 +135,7 @@ def getYesNoInput():
             return False
         else:
             print('Некорректный ввод. Повторите попытку.')
-            
+
 #-------------------------------------ГРУППЫ АКТИВОВ-------------------------------------#
 #ГРУППЫ АКТИВОВ || ФУНКЦИЯ поиска id группы по ее имени
 def getGroupID(parentName):
@@ -435,9 +435,14 @@ else:
     logging.info(f'Пользователь не согласен на создание групп активов из {groupsCsvFile}')
 
 #создание групп PDQL запросов
-print('----------------------------Группы запросов---------------------------------')
+print('------------------------------Группы запросов-------------------------------')
 print(f'Необходимо ли создать группы PDQL запросов из {querriesCsvFile}? Yes/No')
-if(input() == 'Yes'): werePqlGroupsCreated = createPdqlGroups(querriesGroupsCsvFile, querriesCsvFile)
+if (getYesNoInput):
+    logging.info(f'Пользователь согласен на создание групп PDQL запросов из {querriesCsvFile}')
+    print('\n')
+    createPdqlGroups(querriesGroupsCsvFile, querriesCsvFile)
+else:
+    logging.info(f'Пользователь не согласен на создание групп PDQL запросов из {querriesCsvFile}')
 
 #создание PDQL запросов
 print('----------------------------PDQL запросы------------------------------------')
