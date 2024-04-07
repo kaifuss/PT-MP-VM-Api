@@ -1,13 +1,28 @@
 # -*- coding: utf-8 -*-
 print("""
-╔══════════════════════════════════════════════════════════════════════════╗
-║                                  WELCOME                                 ║
-║                               MP VM API TOOL                             ║
-║                           by @github.com/kaifuss/                        ║
-╚══════════════════════════════════════════════════════════════════════════╝
+╔═══════════════════════════════════════════════════════════════════════════╗
+║                                  WELCOME                                  ║
+║                              MP VM API TOOL                               ║
+║                          by @github.com/kaifuss/                          ║
+╚═══════════════════════════════════════════════════════════════════════════╝
 """)
 
 #библиотеки
+import importlib
+required_libraries = ['datetime', 'csv', 'getpass', 'json', 'logging', 'os', 'requests', 'time', 'urllib3']
+for lib in required_libraries:
+    try:
+        importlib.import_module(lib)
+        print(f"{lib} уже установлена.")
+    except ImportError:
+        print(f"{lib} не установлена. Устанавливаем...")
+        try:
+            import pip
+            pip.main(['install', lib])
+            print(f"{lib} успешно установлена.")
+        except Exception as e:
+            print(f"Ошибка при установке {lib}: {e}")
+
 from datetime import datetime
 import csv
 import getpass
