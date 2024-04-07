@@ -1,3 +1,12 @@
+# -*- coding: utf-8 -*-
+print("""
+╔══════════════════════════════════════════════════════════════════════════╗
+║                                  WELCOME                                 ║
+║                               MP VM API TOOL                             ║
+║                           by @github.com/kaifuss/                        ║
+╚══════════════════════════════════════════════════════════════════════════╝
+""")
+
 #библиотеки
 from datetime import datetime
 import csv
@@ -390,10 +399,10 @@ logging.basicConfig(                                                            
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
 )
-
+logging.info('Программа запущена пользователем.')
 #запрос корневой uRL и получение токена
 
-print('--------------------------Добро пожаловать----------------------------\n')
+print('-------------------------------Создание токена------------------------------\n')
 while True:
     rootUrl = 'https://' + input('Введите адрес MP10 Core: https://')
     bearerToken = getTokenMpx()
@@ -404,7 +413,7 @@ while True:
         break
 
 #создание групп активов
-print('--------------------------Группы активов------------------------------')
+print('-------------------------------Группы активов-------------------------------')
 print(f'Необходимо ли создать группы активов из {groupsCsvFile} ? Yes/No')
 if(input() == 'Yes'): 
     logging.info(f'Пользователь согласен на создание групп активов из {groupsCsvFile}')
@@ -414,12 +423,12 @@ else:
     logging.info(f'Пользователь не согласен на создание групп активов из {groupsCsvFile}')
 
 #создание групп PDQL запросов
-print('--------------------------Группы запросов-----------------------------')
+print('----------------------------Группы запросов---------------------------------')
 print(f'Необходимо ли создать группы PDQL запросов из {querriesCsvFile}? Yes/No')
 if(input() == 'Yes'): werePqlGroupsCreated = createPdqlGroups(querriesGroupsCsvFile, querriesCsvFile)
 
 #создание PDQL запросов
-print('--------------------------PDQL запросы--------------------------------')
+print('----------------------------PDQL запросы------------------------------------')
 print(f'Необходимо ли создать PDQL запросы из {querriesCsvFile}? Yes/No')
 if(input() == 'Yes' and werePqlGroupsCreated): createPdqlQueries(querriesCsvFile)
 
