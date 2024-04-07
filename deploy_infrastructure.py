@@ -124,6 +124,18 @@ def getTokenMpx():
         logging.info('Токен доступа получен.')
         return getAuthToken.json()['access_token']
 
+#ГЛОБАЛЬНЫЕ || ФУНКЦИЯ получения ввода Yes / No от юзера
+def getYesNoInput():
+    logging.info('Вызов функции getYesNoInput для получения ввода Yes / No от юзера')
+    while True:
+        inputAnswer = input('Введите Yes для продолжения или No для выхода: ').strip().lower()
+        if inputAnswer in ['yes', 'y', 'да', 'д']:
+            return True
+        elif inputAnswer in ['no', 'n', 'нет', 'н']:
+            return False
+        else:
+            print('Некорректный ввод. Повторите попытку.')
+            
 #-------------------------------------ГРУППЫ АКТИВОВ-------------------------------------#
 #ГРУППЫ АКТИВОВ || ФУНКЦИЯ поиска id группы по ее имени
 def getGroupID(parentName):
@@ -400,8 +412,8 @@ logging.basicConfig(                                                            
     format='%(asctime)s - %(levelname)s - %(message)s',
 )
 logging.info('Программа запущена пользователем.')
-#запрос корневой uRL и получение токена
 
+#запрос корневой uRL и получение токена
 print('-------------------------------Создание токена------------------------------\n')
 while True:
     rootUrl = 'https://' + input('Введите адрес MP10 Core: https://')
@@ -414,8 +426,8 @@ while True:
 
 #создание групп активов
 print('-------------------------------Группы активов-------------------------------')
-print(f'Необходимо ли создать группы активов из {groupsCsvFile} ? Yes/No')
-if(input() == 'Yes'): 
+print(f'Необходимо ли создать группы активов из {groupsCsvFile} ?\n')
+if(getYesNoInput()): 
     logging.info(f'Пользователь согласен на создание групп активов из {groupsCsvFile}')
     print('\n')
     createAssetsFromCsv(groupsCsvFile)
