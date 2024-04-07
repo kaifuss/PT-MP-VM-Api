@@ -19,34 +19,31 @@ def sendAnyPostRequest(requestUrl, headers, data, jsonData, requestType):
         else:
             logging.info(f'Отправлен POST запрос на {requestType} с данными на url {requestUrl}')
             response = requests.post(requestUrl, headers=headers, data=data, verify=False)
-        response.raise_for_status()  # Проверка статуса ответа
-
-        logging.info(f'Запрос на {requestType} выполнен успешно на url {requestUrl}.')
+        response.raise_for_status()
+        logging.info(f'Запрос на {requestType} выполнен успешно на url {requestUrl}. Статус код: {response.status_code}')
         return response
     
     except requests.exceptions.HTTPError as err:
         logging.error(f'HTTP-ошибка при выполнении {requestType} запроса на {requestUrl}: {err}')
         logging.error(f'Ответ сервера на запрос: \n{response.text}')
-        print(f'Произошла ошибка при выполнении запроса. Логи находятся в {loggingFile}')
+        print(f'Произошла ошибка при выполнении запроса на {requestType}. Логи находятся в {loggingFile}')
         return None
 
     except requests.exceptions.RequestException as err:
         logging.error(f'Ошибка отправки запроса на {requestType} на url {requestUrl}: {err}')
         logging.error(f'Ответ сервера на запрос: \n{response.text}')
-        print(f'Произошла ошибка при выполнении запроса. Логи находятся в {loggingFile}')
+        print(f'Произошла ошибка при выполнении запроса на {requestType}. Логи находятся в {loggingFile}')
         return None
     
     except Exception as err:
         logging.error(f'Неизвестная ошибка при выполнении запроса на {requestType} на url {requestUrl}: {err}')
         logging.error(f'Ответ сервера на запрос: \n{response.text}')
-        print(f'Произошла ошибка при выполнении запроса. Логи находятся в {loggingFile}')
+        print(f'Произошла ошибка при выполнении запроса на {requestType}. Логи находятся в {loggingFile}')
         return None
 
 #ГЛОБАЛЬНЫЕ || ФУНКЦИЯ универсальная отправки GET запроса 
 def sendAnyGetRequest(requestUrl, headers, data, json_data, requestType):
     try:
-        print(f'Отправляется запрос на {requestType}')
-        
         if json_data:
             logging.info(f'Отправлен GET запрос на {requestType} с JSON данными на url {requestUrl}')
             response = requests.get(requestUrl, headers=headers, json=json_data, verify=False)
@@ -75,11 +72,11 @@ def sendAnyGetRequest(requestUrl, headers, data, json_data, requestType):
     
 #ГЛОБАЛЬНЫЕ || ФУНКЦИЯ получения токена доступа
 def getTokenMpx():
-    logging.info('Функция getTokenMpx запущена')
+    logging.info('Вызов функции getTokenMpx для получения токена доступа')
 
+    adminName = input('Введите логин пользователя MP10: ') 
     #ввод логина и пароля
     while True: 
-        adminName = input('Введите логин пользователя MP10: ') 
         adminPassword = getpass.getpass('Введите пароль пользователя MP10: ')
         adminPasswordCheck = getpass.getpass('Повторите пароль пользователя MP10: ')
         if adminPassword != adminPasswordCheck:
@@ -90,8 +87,8 @@ def getTokenMpx():
             logging.info('Логин и пароль пользователя MP10 введены верно')
             break
     #ввод clientSecret
-    logging.info('Введен clientSecret.')
-    clientSecret = input('Введите clientSecret: ') 
+    clientSecret = input('Введите clientSecret: ')
+    logging.info('Введен clientSecret')
 
     #заголовки запроса
     headersOfRequest = {
@@ -108,6 +105,7 @@ def getTokenMpx():
         'scope':'mpx.api',
     }
     #отправка запроса
+    print('\nОтправляется запрос на получение токена доступа для mpx...')
     getAuthToken = sendAnyPostRequest(rootUrl + ':3334/connect/token', headersOfRequest, dataGetAuthToken, None, 'получение токена доступа для mpx')
     
     if getAuthToken is None:
@@ -120,29 +118,31 @@ def getTokenMpx():
 #-------------------------------------ГРУППЫ АКТИВОВ-------------------------------------#
 #ГРУППЫ АКТИВОВ || ФУНКЦИЯ поиска id группы по ее имени
 def getGroupID(parentName):
-    print(f"Выполняется поиск id этой группы-родителя: {parentName}")
+    logging.info(f'Вызов функции getGroupID для поиска id группы-родителя: {parentName}')
     
     # Запрос на получение информации о всех группах
     groupsUrl = f"{rootUrl}/api/assets_temporal_readmodel/v2/groups/hierarchy"
     headers = {'Authorization': f'Bearer {bearerToken}'}
-
-    # Отправка запроса
     response = sendAnyGetRequest(groupsUrl, headers, None, None, f'поиск группы {parentName}')
     groupsData = response.json()
 
     # Поиск родительской группы по имени
     parentGroupId, found = findGroupIdRecursive(groupsData, parentName)
     if not found:
-        print(f"Родительская группа {parentName} для создаваемой группы не была найдена. Создаваемая группа будет в группе Root")
+        logging.info(f'Родительская группа {parentName} для создаваемой группы не была найдена.')
+        print(f"Внимание! Родительская группа {parentName} для создаваемой группы не была найдена. Создаваемая группа будет создана в корне.")
         parentGroupId = '00000000-0000-0000-0000-000000000002'  # Устанавливаем ID root
     else:
-        print(f"Родительская группа {parentName} имеет ID: {parentGroupId}")
+        logging.info(f'Родительская группа {parentName} была найдена и имеет id: {parentGroupId}')
     return parentGroupId
 
 #ГРУППЫ АКТИВОВ || ФУНКЦИЯ рекурсивного поиска группы в подгруппах
 def findGroupIdRecursive(groupsData, targetGroupName):
+    logging.info(f'Вызов рекурсивной функции findGroupIdRecursive для поиска id группы: {targetGroupName}')
+
     # Поиск группы по имени в текущем уровне
     for group in groupsData:
+        logging.info(f'Поиск группы {targetGroupName} в группе {group["name"]}.')
         if group["name"] == targetGroupName:
             return group["id"], True  # Группа найдена, возвращаем ID и True
 
@@ -151,43 +151,40 @@ def findGroupIdRecursive(groupsData, targetGroupName):
             result, found = findGroupIdRecursive(group["children"], targetGroupName)
             if found:
                 return result, True
-
+            
     return '00000000-0000-0000-0000-000000000002', False  # Группа не найдена, возвращаем ID root и False
 
 #ГРУППЫ АКТИВОВ || ФУНКЦИЯ проверки статуса создания группы
-def checkGroupCreated(operationId):
-    # Запрос на проверку статуса операции
+def checkGroupCreated(operationId, groupName):
+    logging.info(f'Вызов функции checkGroupCreated для проверки статуса создания группы. {groupName}.')
     operationStatusUrl = f"{rootUrl}/api/assets_processing/v2/groups/operations/{operationId}"
     headers = {'Authorization': f'Bearer {bearerToken}'}
-
     while True:
-        # Отправка запроса
-        response = sendAnyGetRequest(operationStatusUrl, headers, None, None, f'проверка статуса создания группы')
+        response = sendAnyGetRequest(operationStatusUrl, headers, None, None, f'проверку статуса создания группы {groupName}')
 
         if response is not None and response.status_code != 202:
-            print('Группа создана. Ее ID: ' + response.json())
+            logging.info(f'Группа {groupName} создана. Ее ID {response.json()}')
+            print(f'Группа {groupName} создана. Ее ID {response.json()}')
             break
         elif response is not None:
+            logging.info(f'На момент времени {datetime.now()} группа {groupName} еще создается.')
+            print('Группа не создана. Пожалуйста, подождите...')
             time.sleep(1)
-            print('Группа не создана. Пожалуйста, подождите.')
         else:
-            print('Ошибка при выполнении запроса. Повторная попытка отправки запроса.')
+            logging.error('Не удалось получить статус создания группы {groupName}. Вернулся объект None')
+            break
 
 #ГРУППЫ АКТИВОВ || ФУНКЦИЯ групп CSV -> JSON + сохраняем на сервер
 def createAssetsFromCsv(csvFilePath):
-
+    logging.info('Вызов функции createAssetsFromCsv для создания групп активов из CSV файла.')
     # Открываем CSV-файл
     with open(csvFilePath, 'r', newline='', encoding='utf-8') as assetsGroupsFile:
-        # Создаем читатель CSV
-        csvReader = csv.reader(assetsGroupsFile, delimiter=';')
-
-        # Пропускаем заголовок (первую строку)
-        next(csvReader)
-
-        # Обрабатываем оставшиеся строки
-        for row in csvReader:
+        csvReader = csv.reader(assetsGroupsFile, delimiter=';') # Создаем читатель CSV
+        next(csvReader)                                         # Пропускаем заголовок (первую строку)
+        for row in csvReader:                                   # Обрабатываем оставшиеся строки
             print('-----------------------------------------------------------------------')
-            print(f"Выполняется чтение параметров для создания группы: {row[0]}")
+            logging.info(f'Выполянется чтение параметров для создания группы: {row[0]}')
+            print(f'Выполянется чтение параметров для создания группы: {row[0]}')
             # Создаем словарь для хранения данных текущей строки
             rowData = {
                 "name": row[0],
@@ -214,22 +211,29 @@ def createAssetsFromCsv(csvFilePath):
                     "usedNetworks": row[16]
                 }
             }
-            
             # удаление лишних полей
             if row[3] == "static":
                 del rowData["predicate"]
-            
-            print('-----------------------------------------------------------------------')
+                logging.info(f'Удален pdql-фильтр для группы {row[0]}')
 
-            # Создаем новую группу
+            # отправляем запрос на создание группы
+            print(f'Отправляется запрос на создание группы: {row[0]}')
             createGroupsUrl = rootUrl + '/api/assets_processing/v2/groups' 
             headers = {'Authorization': 'Bearer ' + bearerToken}
             createGroupsRequest = sendAnyPostRequest(createGroupsUrl, headers, None, rowData, f'создание группы {row[0]}')
-
-            #проверяем статус того, что группа создалась
-            print('-----------------------------------------------------------------------')
-            print(f'Проверка создания группы: {row[0]}')
-            checkGroupCreated(createGroupsRequest.json()["operationId"])
+            
+            if createGroupsRequest is None:
+                print(f'Произошла ошибка при создании группы {row[0]}. Группа не будет создана. Необходимо ли остановить скрипт? Yes/No')
+                if input() == 'Yes':
+                    logging.error(f'Не удалось создать группу {row[0]}. Пользователь прервал выполнение скрипта.')
+                    break
+                else:
+                    logging.error(f'Не удалось создать группу {row[0]}. Пользователь продолжил выполнение скрипта.')
+            else:
+                #проверяем статус того, что группа создалась
+                print(f'Проверка создания группы: {row[0]}')
+                checkGroupCreated(createGroupsRequest.json()["operationId"], row[0])
+                print('\n')
 
 #-------------------------------------PDQL ЗАПРОСЫ----------------------------------------#
 #ЗАПРОСЫ PQDL || ФУНКЦИЯ поиска id группы запросов по ее displayName имени в файле groupsOfQuerries.json
@@ -365,7 +369,7 @@ def createPdqlQueries(querriesCsvFile):
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 #глобальные переменные
-bearerToken = ''                        #токен MP10 Core
+bearerToken = None                      #токен MP10 Core
 werePqlGroupsCreated = False            #флаг создания групп PDQL запросов нужен для PDQL запросов
 
 #установление пути к файлам манифестам
@@ -377,24 +381,35 @@ querriesCsvFile = os.path.join(manifestsDirectory, "pdql_manifest.csv")         
 querriesGroupsCsvFile = os.path.join(manifestsDirectory, "groupsOfQuerries.json")       #файл, куда скачаваем информацию о группах PDQL запросов
 
 #логирование ошибок
-loggingDirectory = os.path.join(currentDirectory, 'logging')        #директория с логами
-loggingFile = f"main-{datetime.now().strftime('%d-%m-%Y-%H-%M-%S')}-log.log"
-logging.basicConfig(
+loggingDirectory = os.path.join(currentDirectory, 'logging')                            #директория с логами
+loggingFile = f"main-{datetime.now().strftime('%d-%m-%Y-%H-%M-%S')}-log.log"            #имя лог файла
+logging.basicConfig(                                                                    #настройка логирования
     filename=os.path.join(loggingDirectory, loggingFile),
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
 )
 
 #запрос корневой uRL и получение токена
-print('--------------------------Добро пожаловать----------------------------')
-rootUrl = 'https://' + input('Введите адрес MP10 Core: https://')
-logging.info('Вызов функции получения токена getTokenMpx')
-bearerToken = getTokenMpx()
+
+print('--------------------------Добро пожаловать----------------------------\n')
+while True:
+    rootUrl = 'https://' + input('Введите адрес MP10 Core: https://')
+    bearerToken = getTokenMpx()
+    if bearerToken is None:
+        print('Не удалось получить токен. Повторите попытку.\n')
+    else:
+        print('Токен получен.\n')
+        break
 
 #создание групп активов
 print('--------------------------Группы активов------------------------------')
 print(f'Необходимо ли создать группы активов из {groupsCsvFile} ? Yes/No')
-if(input() == 'Yes'): werePqlGroupsCreated = createAssetsFromCsv(groupsCsvFile)
+if(input() == 'Yes'): 
+    logging.info(f'Пользователь согласен на создание групп активов из {groupsCsvFile}')
+    print('\n')
+    createAssetsFromCsv(groupsCsvFile)
+else:
+    logging.info(f'Пользователь не согласен на создание групп активов из {groupsCsvFile}')
 
 #создание групп PDQL запросов
 print('--------------------------Группы запросов-----------------------------')
