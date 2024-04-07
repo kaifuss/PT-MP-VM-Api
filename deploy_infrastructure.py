@@ -26,16 +26,19 @@ def sendAnyPostRequest(requestUrl, headers, data, jsonData, requestType):
     
     except requests.exceptions.HTTPError as err:
         logging.error(f'HTTP-ошибка при выполнении {requestType} запроса на {requestUrl}: {err}')
+        logging.error(f'Ответ сервера на запрос: \n{response.text}')
         print(f'Произошла ошибка при выполнении запроса. Логи находятся в {loggingFile}')
         return None
 
     except requests.exceptions.RequestException as err:
         logging.error(f'Ошибка отправки запроса на {requestType} на url {requestUrl}: {err}')
+        logging.error(f'Ответ сервера на запрос: \n{response.text}')
         print(f'Произошла ошибка при выполнении запроса. Логи находятся в {loggingFile}')
         return None
     
     except Exception as err:
         logging.error(f'Неизвестная ошибка при выполнении запроса на {requestType} на url {requestUrl}: {err}')
+        logging.error(f'Ответ сервера на запрос: \n{response.text}')
         print(f'Произошла ошибка при выполнении запроса. Логи находятся в {loggingFile}')
         return None
 
