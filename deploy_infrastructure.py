@@ -16,7 +16,6 @@ required_libraries = ['datetime', 'csv', 'getpass', 'json', 'logging', 'os', 're
 for lib in required_libraries:
     try:
         importlib.import_module(lib)
-        print(f"{lib} уже установлена.")
     except ImportError:
         print(f"{lib} не установлена. Устанавливаем...")
         try:
@@ -143,15 +142,19 @@ def getTokenMpx():
         return getAuthToken.json()['access_token']
 
 #ГЛОБАЛЬНЫЕ || ФУНКЦИЯ получения ввода Yes / No от юзера
-def getYesNoInput():
-    logging.info('Вызов функции getYesNoInput для получения ввода Yes / No от юзера')
+def getYesNoInput(Action):
+    print(Action + '\n')
+    logging.info(f'Пользователя спросили {Action}.')
     while True:
         inputAnswer = input('Введите Yes для продолжения или No для выхода: ').strip().lower()
         if inputAnswer in ['yes', 'y', 'да', 'д']:
+            logging.info('Пользователь согласился на действие.')
             return True
         elif inputAnswer in ['no', 'n', 'нет', 'н']:
+            logging.info('Пользователь отказался от действия.')
             return False
         else:
+            logging.error('Некорректный ввод от пользователя.')
             print('Некорректный ввод. Повторите попытку.')
 
 #-------------------------------------ГРУППЫ АКТИВОВ-------------------------------------#
@@ -444,8 +447,7 @@ while True:
 
 #создание групп активов
 print('-------------------------------Группы активов-------------------------------')
-print(f'Необходимо ли создать группы активов из {groupsCsvFile} ?\n')
-if(getYesNoInput()): 
+if(getYesNoInput(f'Необходимо ли создать группы активов из {groupsCsvFile} ?')): 
     logging.info(f'Пользователь согласен на создание групп активов из {groupsCsvFile}')
     print('\n')
     createAssetsFromCsv(groupsCsvFile)
