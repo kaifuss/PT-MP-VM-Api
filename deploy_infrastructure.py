@@ -9,7 +9,10 @@ print("""
 
 #библиотеки
 import importlib
+import sys
+import subprocess
 required_libraries = ['datetime', 'csv', 'getpass', 'json', 'logging', 'os', 'requests', 'time', 'urllib3']
+
 for lib in required_libraries:
     try:
         importlib.import_module(lib)
@@ -17,11 +20,11 @@ for lib in required_libraries:
     except ImportError:
         print(f"{lib} не установлена. Устанавливаем...")
         try:
-            import pip
-            pip.main(['install', lib])
+            subprocess.check_call([sys.executable, '-m', 'pip', 'install', lib])
             print(f"{lib} успешно установлена.")
         except Exception as e:
-            print(f"Ошибка при установке {lib}: {e}")
+            print(f"Ошибка при установке {lib}: {e}\n Скрипт будет остановлен. Попробуйте установить {lib} вручную")
+            sys.exit()
 
 from datetime import datetime
 import csv
