@@ -301,7 +301,6 @@ def createPdqlGroups(querriesGroupsCsvFile, pdqlManifestCsvFile):
         csvreader = csv.reader(pqdlGroupsFile, delimiter=';')
         # Пропускаем первую строку
         header = next(csvreader)
-        
         # Читаем все строки в память
         rows = list(csvreader)
 
@@ -448,21 +447,14 @@ while True:
 #создание групп активов
 print('-------------------------------Группы активов-------------------------------\n')
 if(getYesNoInput(f'Необходимо ли создать группы активов из {groupsCsvFile} ?')): 
-    logging.info(f'Пользователь согласен на создание групп активов из {groupsCsvFile}')
     print('\n')
     createAssetsFromCsv(groupsCsvFile)
-else:
-    logging.info(f'Пользователь не согласен на создание групп активов из {groupsCsvFile}')
 
 #создание групп PDQL запросов
 print('-------------------------------Группы запросов------------------------------\n')
-print(f'Необходимо ли создать группы PDQL запросов из {querriesCsvFile}? Yes/No')
-if (getYesNoInput):
-    logging.info(f'Пользователь согласен на создание групп PDQL запросов из {querriesCsvFile}')
+if(getYesNoInput(f'Необходимо ли создать группы PDQL запросов из {querriesGroupsCsvFile} ?')):
     print('\n')
     createPdqlGroups(querriesGroupsCsvFile, querriesCsvFile)
-else:
-    logging.info(f'Пользователь не согласен на создание групп PDQL запросов из {querriesCsvFile}')
 
 #создание PDQL запросов
 print('----------------------------PDQL запросы------------------------------------')
