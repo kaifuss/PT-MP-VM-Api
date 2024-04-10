@@ -36,6 +36,23 @@ import time
 import urllib3
 
 #-------------------------------------ГЛОБАЛЬНЫЕ-----------------------------------------#
+#ГЛОБАЛЬНЫЕ || ФУНКЦИЯ получения ввода Yes / No от юзера
+def getYesNoInput(Action):
+    print(Action)
+    logging.info(f'Пользователя спросили {Action}.')
+    while True:
+        inputAnswer = input('Введите Yes для продолжения или No для отказа: ').strip().lower()
+        if inputAnswer in ['yes', 'y', 'да', 'д']:
+            logging.info('Пользователь согласился на действие.')
+            return True
+        elif inputAnswer in ['no', 'n', 'нет', 'н']:
+            logging.info('Пользователь отказался от действия.')
+            return False
+        else:
+            logging.error('Некорректный ввод от пользователя.')
+            print('Некорректный ввод. Повторите попытку.')
+
+
 #ГЛОБАЛЬНЫЕ || ФУНКЦИЯ универсальная отправки POST запроса 
 def sendAnyPostRequest(requestUrl, headers, data, jsonData, requestType):
     try:
@@ -99,19 +116,22 @@ def sendAnyGetRequest(requestUrl, headers, data, json_data, requestType):
 #ГЛОБАЛЬНЫЕ || ФУНКЦИЯ получения токена доступа
 def getTokenMpx():
     logging.info('Вызов функции getTokenMpx для получения токена доступа')
-
-    adminName = input('Введите логин пользователя MP10: ') 
-    #ввод логина и пароля
-    while True: 
-        adminPassword = getpass.getpass('Введите пароль пользователя MP10: ')
-        adminPasswordCheck = getpass.getpass('Повторите пароль пользователя MP10: ')
-        if adminPassword != adminPasswordCheck:
-            logging.error('Пароли при вводе не совпали.')
-            print('Пароли не совпадают. Повторите попытку.')
-            continue
-        else:
-            logging.info('Логин и пароль пользователя MP10 введены верно')
-            break
+    if getYesNoInput('Использовать креды по умолчанию: Administrator/P@ssw0rd? Yes/No'):
+        adminName = 'Administrator'
+        adminPassword = 'P@ssw0rd'
+    else:
+        adminName = input('Введите логин пользователя MP10: ') 
+        #ввод логина и пароля
+        while True: 
+            adminPassword = getpass.getpass('Введите пароль пользователя MP10: ')
+            adminPasswordCheck = getpass.getpass('Повторите пароль пользователя MP10: ')
+            if adminPassword != adminPasswordCheck:
+                logging.error('Пароли при вводе не совпали.')
+                print('Пароли не совпадают. Повторите попытку.')
+                continue
+            else:
+                logging.info('Логин и пароль пользователя MP10 введены верно')
+                break
     #ввод clientSecret
     clientSecret = input('Введите clientSecret: ')
     logging.info('Введен clientSecret')
@@ -141,21 +161,6 @@ def getTokenMpx():
         logging.info('Токен доступа получен.')
         return getAuthToken.json()['access_token']
 
-#ГЛОБАЛЬНЫЕ || ФУНКЦИЯ получения ввода Yes / No от юзера
-def getYesNoInput(Action):
-    print(Action)
-    logging.info(f'Пользователя спросили {Action}.')
-    while True:
-        inputAnswer = input('Введите Yes для продолжения или No для отказа: ').strip().lower()
-        if inputAnswer in ['yes', 'y', 'да', 'д']:
-            logging.info('Пользователь согласился на действие.')
-            return True
-        elif inputAnswer in ['no', 'n', 'нет', 'н']:
-            logging.info('Пользователь отказался от действия.')
-            return False
-        else:
-            logging.error('Некорректный ввод от пользователя.')
-            print('Некорректный ввод. Повторите попытку.')
 
 #-------------------------------------ГРУППЫ АКТИВОВ-------------------------------------#
 #ГРУППЫ АКТИВОВ || ФУНКЦИЯ поиска id группы по ее имени
@@ -348,7 +353,6 @@ def createPdqlGroups(querriesGroupsCsvFile):
 #ЗАПРОСЫ PDQL || ФУНКЦИЯ создание pdql запросов с использованием словаря содержащего соотнесение созданных групп PDQL запросов и PDQL запросов
 def createPdqlQueriesWithDictionary(querriesCsvFile):
     logging.info('Вызвана функция createPdqlQueriesWithDictionary для создания групп запросов с использованием локального словаря.')
-    
     with open(querriesCsvFile, 'r', newline='', encoding='utf-8') as pdqlQueriesFile:
         csvReader = csv.reader(pdqlQueriesFile, delimiter=';')
         next(csvReader)
