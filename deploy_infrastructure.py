@@ -162,8 +162,8 @@ def getTokenMpx():
 
 
 #-------------------------------------ГРУППЫ АКТИВОВ-------------------------------------#
-#ГРУППЫ АКТИВОВ || ФУНКЦИЯ поиска id группы по ее имени
-def getGroupID(parentName):
+#ГРУППЫ АКТИВОВ || ФУНКЦИЯ поиска id группы-родителя по ее имени
+def findAssetsGroupID(parentName):
     logging.info(f'Вызов функции getGroupID для поиска id группы-родителя: {parentName}')
     
     # Запрос на получение информации о всех группах
@@ -173,18 +173,19 @@ def getGroupID(parentName):
     groupsData = response.json()
 
     # Поиск родительской группы по имени
-    parentGroupId, found = findGroupIdRecursive(groupsData, parentName)
+    parentGroupId, found = findAssetsGroupIdRecursive(groupsData, parentName)
     if not found:
         logging.info(f'Родительская группа {parentName} для создаваемой группы не была найдена.')
         print(f"Внимание! Родительская группа {parentName} для создаваемой группы не была найдена. Создаваемая группа будет создана в корне.")
         parentGroupId = '00000000-0000-0000-0000-000000000002'  # Устанавливаем ID root
     else:
         logging.info(f'Родительская группа {parentName} была найдена и имеет id: {parentGroupId}')
+        assetsGroupsDictionary[parentName] = parentGroupId
     return parentGroupId
 
 #ГРУППЫ АКТИВОВ || ФУНКЦИЯ рекурсивного поиска группы в подгруппах
-def findGroupIdRecursive(groupsData, targetGroupName):
-    logging.info(f'Вызов рекурсивной функции findGroupIdRecursive для поиска id группы: {targetGroupName}')
+def findAssetsGroupIdRecursive(groupsData, targetGroupName):
+    logging.info(f'Вызов рекурсивной функции findAssetsGroupIdRecursive для поиска id группы: {targetGroupName}')
 
     # Поиск группы по имени в текущем уровне
     for group in groupsData:
@@ -194,7 +195,7 @@ def findGroupIdRecursive(groupsData, targetGroupName):
 
         # Рекурсивный поиск во всех дочерних группах
         if "children" in group:
-            result, found = findGroupIdRecursive(group["children"], targetGroupName)
+            result, found = findAssetsGroupIdRecursive(group["children"], targetGroupName)
             if found:
                 return result, True
             
@@ -211,6 +212,7 @@ def checkGroupCreated(operationId, groupName):
         if response is not None and response.status_code != 202:
             logging.info(f'Группа {groupName} создана. Ее ID {response.json()}')
             print(f'Группа {groupName} создана. Ее ID {response.json()}')
+            assetsGroupsDictionary[groupName] = response.json()
             break
         elif response is not None:
             logging.info(f'На момент времени {datetime.now()} группа {groupName} еще создается.')
@@ -235,7 +237,7 @@ def createAssetsFromCsv(csvFilePath):
             rowData = {
                 "name": row[0],
                 "description": row[1],
-                "parentId": getGroupID(row[2]),
+                "parentId": assetsGroupsDictionary.get(row[2], findAssetsGroupID(row[2])),
                 "groupType": row[3],
                 "predicate": row[4],
                 "metrics": {
@@ -269,8 +271,8 @@ def createAssetsFromCsv(csvFilePath):
             createGroupsRequest = sendAnyPostRequest(createGroupsUrl, headers, None, rowData, f'создание группы {row[0]}')
             
             if createGroupsRequest is None:
-                print(f'Произошла ошибка при создании группы {row[0]}. Группа не будет создана. Необходимо ли остановить скрипт? Yes/No')
-                if input() == 'Yes':
+                print(f'Произошла ошибка при создании группы {row[0]}. Группа не будет создана.')
+                if getYesNoInput('Прервать создание групп?'):
                     logging.error(f'Не удалось создать группу {row[0]}. Пользователь прервал выполнение скрипта.')
                     break
                 else:
@@ -283,7 +285,7 @@ def createAssetsFromCsv(csvFilePath):
 
 #-------------------------------------PDQL ЗАПРОСЫ----------------------------------------#
 #ЗАПРОСЫ PQDL || ФУНКЦИЯ поиска id группы запросов по ее displayName имени в файле groupsOfQuerries.json, если группы не создавались в программе
-def findGroupId(groupsData, displayName):
+def findPdqlGroupId(groupsData, displayName):
     if not groupsData:
         print('Не было найдено группы с именем: ' + displayName)
         return None
@@ -293,7 +295,7 @@ def findGroupId(groupsData, displayName):
             return group["id"]
 
         if "children" in group and group["children"]:
-            result = findGroupId(group["children"], displayName)
+            result = findPdqlGroupId(group["children"], displayName)
             if result:
                 return result
 
@@ -323,7 +325,7 @@ def createPdqlGroups(querriesGroupsCsvFile):
             #Параметры группы из текущей строки
             rowData = {
                 "displayName": row[0],
-                "parentId": pgqlGroupsDictionary.get(row[1], findGroupId(row[1])),
+                "parentId": pgqlGroupsDictionary.get(row[1], findPdqlGroupId(row[1])),
                 "type": row[2]
             }
             headers = {
