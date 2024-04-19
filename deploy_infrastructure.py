@@ -172,7 +172,7 @@ def findAssetsGroupID(parentName):
     response = sendAnyGetRequest(groupsUrl, headers, None, None, f'поиск группы {parentName}')
     groupsData = response.json()
 
-    # Поиск родительской группы по имени
+    # Поиск родительской группы активов по имени
     parentGroupId, found = findAssetsGroupIdRecursive(groupsData, parentName)
     if not found:
         logging.info(f'Родительская группа {parentName} для создаваемой группы не была найдена.')
