@@ -134,7 +134,6 @@ def getTokenMpx():
     #ввод clientSecret
     clientSecret = input('Введите clientSecret: ')
     logging.info('Введен clientSecret')
-
     #заголовки запроса
     headersOfRequest = {
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -145,13 +144,14 @@ def getTokenMpx():
         'password': adminPassword,  
         'client_id':'mpx',
         'client_secret': clientSecret,
-        'grant_type':'password',
+        'grant_type':'client_credentials',
         'response_type':'token',
         'scope':'mpx.api',
     }
+    getTokenUrl = {rootUrl} + "/connect/token"
     #отправка запроса
     print('\nОтправляется запрос на получение токена доступа для mpx...')
-    getAuthToken = sendAnyPostRequest(rootUrl + ':3334/connect/token', headersOfRequest, dataGetAuthToken, None, 'получение токена доступа для mpx')
+    getAuthToken = sendAnyPostRequest(getTokenUrl, headersOfRequest, dataGetAuthToken, None, 'получение токена доступа для mpx')
     
     if getAuthToken is None:
         logging.error('Не удалось получить токен доступа. Вернулся объект None')
@@ -208,7 +208,6 @@ def checkGroupCreated(operationId, groupName):
     headers = {'Authorization': f'Bearer {bearerToken}'}
     while True:
         response = sendAnyGetRequest(operationStatusUrl, headers, None, None, f'проверку статуса создания группы {groupName}')
-
         if response is not None and response.status_code != 202:
             logging.info(f'Группа {groupName} создана. Ее ID {response.json()}')
             print(f'Группа {groupName} создана. Ее ID {response.json()}')
@@ -216,7 +215,7 @@ def checkGroupCreated(operationId, groupName):
             break
         elif response is not None:
             logging.info(f'На момент времени {datetime.now()} группа {groupName} еще создается.')
-            print('Группа не создана. Пожалуйста, подождите...')
+            print('Группа еще создается. Пожалуйста, подождите...')
             time.sleep(1)
         else:
             logging.error('Не удалось получить статус создания группы {groupName}. Вернулся объект None')
@@ -266,9 +265,9 @@ def createAssetsFromCsv(csvFilePath):
 
             # отправляем запрос на создание группы
             print(f'Отправляется запрос на создание группы: {row[0]}')
-            createGroupsUrl = rootUrl + '/api/assets_processing/v2/groups' 
+            createAssetsGroupsUrl = rootUrl + '/api/assets_processing/v2/groups' 
             headers = {'Authorization': 'Bearer ' + bearerToken}
-            createGroupsRequest = sendAnyPostRequest(createGroupsUrl, headers, None, rowData, f'создание группы {row[0]}')
+            createGroupsRequest = sendAnyPostRequest(createAssetsGroupsUrl, headers, None, rowData, f'создание группы {row[0]}')
             
             if createGroupsRequest is None:
                 print(f'Произошла ошибка при создании группы {row[0]}. Группа не будет создана.')
@@ -279,15 +278,31 @@ def createAssetsFromCsv(csvFilePath):
                     logging.error(f'Не удалось создать группу {row[0]}. Пользователь продолжил выполнение скрипта.')
             else:
                 #проверяем статус того, что группа создалась
-                print(f'Проверка создания группы: {row[0]}')
+                logging.info(f'Проверка создания группы: {row[0]}')
                 checkGroupCreated(createGroupsRequest.json()["operationId"], row[0])
                 print('\n')
 
 #-------------------------------------PDQL ЗАПРОСЫ----------------------------------------#
-#ЗАПРОСЫ PQDL || ФУНКЦИЯ поиска id группы запросов по ее displayName имени в файле groupsOfQuerries.json, если группы не создавались в программе
-def findPdqlGroupId(groupsData, displayName):
+#PDQL запросы || функция скачивания файла, содержащего информацию о группах PDQL запросов
+def downloadPdqlGroupsData(querriesGroupsDictionary):
+    logging.info('Вызвана функция downloadPdqlGroupsData для скачивания информации о группах PDQL запросов.')
+    headers = {
+        'Authorization': f'Bearer {bearerToken}',
+        'content-type': 'application/json, text/plain, */*'
+        }
+    querriesHierarchyUrl = rootUrl + '/api/assets_temporal_readmodel/v1/stored_queries/folders/queries/'
+    print("Выполняется актуализация информации об иерархии групп PDQL запросов.")
+    response = sendAnyGetRequest(querriesHierarchyUrl, headers, None, None, "скачивание информации о группах PDQL запросов")
+    response.raise_for_status()
+    with open (querriesGroupsDictionary, 'w', encoding='utf-8') as querriesGroupsFile:
+        json.dump(response.json(), querriesGroupsFile, ensure_ascii=False)
+    print("Информация о текущей иерархии получена")
+    logging.info("Информация о текущей иерархии групп записана в файл groupsOfQuerries.json")
+
+#PDQL запросы || функция поиска ID группы в иерархии групп
+def findQuerriesGroupId(groupsData, displayName):
+    logging.info(f'Вызвана функция findQuerriesGroupId для поиска ID группы {displayName} в иерархии групп.')
     if not groupsData:
-        print('Не было найдено группы с именем: ' + displayName)
         return None
 
     for group in groupsData:
@@ -295,28 +310,20 @@ def findPdqlGroupId(groupsData, displayName):
             return group["id"]
 
         if "children" in group and group["children"]:
-            result = findPdqlGroupId(group["children"], displayName)
+            result = findQuerriesGroupId(group["children"], displayName)
             if result:
                 return result
+    
+    querriesGroupsDictionary[displayName] = group["id"]
+    return None
 
-#ЗАПРОСЫ PDQL || ФУНКЦИЯ поиска id группы по ее имени в словаре, если группы создавались в программе
-def searchInDictionary(keyName):
-    logging.info(f'Вызов функции searchInDictionary для поиска id группы {keyName}.')
-    if keyName in pgqlGroupsDictionary:
-        logging.info(f'Группа {keyName} найдена в словаре созданных ранее групп. Имеет ID {pgqlGroupsDictionary[keyName]}')
-        return pgqlGroupsDictionary[keyName]
-    else:
-        logging.info(f'Группа {keyName} не найдена в словаре созданных ранее групп.')
-        print('Создаваемая группа будет в группе Общие запросы.')
-        return 'CommonRootFolder'
-
-#ЗАПРОСЫ PQDL || ФУНКЦИЯ создание группы для запросов
+#ЗАПРОСЫ PQDL || ФУНКЦИЯ создание групп для запросов
 def createPdqlGroups(querriesGroupsCsvFile):
     # Читаем информацию о группах для запросов из файла pdql_groups_manifest.csv
     logging.info('Вызвана функция createPdqlGroups для создания групп PDQL запросов из файла pdql_groups_manifest.csv.')
 
     with open(querriesGroupsCsvFile, 'r', newline='', encoding='utf-8') as pdqGroupslManifestFile:
-        csvReader = csv.reader(pdqGroupslManifestFile, delimiter=';')         # Создаем читатель CSV
+        csvReader = csv.reader(pdqGroupslManifestFile, delimiter=';')   # Создаем читатель CSV
         next(csvReader)                                                 # Пропускаем заголовок (первую строку)                               
         for row in csvReader:                                           # Обрабатываем оставшиеся строки
             print('-----------------------------------------------------------------------\n')
@@ -325,7 +332,7 @@ def createPdqlGroups(querriesGroupsCsvFile):
             #Параметры группы из текущей строки
             rowData = {
                 "displayName": row[0],
-                "parentId": pgqlGroupsDictionary.get(row[1], findPdqlGroupId(row[1])),
+                "parentId": querriesGroupsDictionary.get(row[1], findQuerriesGroupId(row[1])),
                 "type": row[2]
             }
             headers = {
@@ -341,7 +348,7 @@ def createPdqlGroups(querriesGroupsCsvFile):
             if createPdqlGroupsRequest.status_code == 200:
                 logging.info(f'Группа {row[0]} создана успешно. Ее ID: {createPdqlGroupsRequest.json()["id"]}')
                 print(f'Группа {row[0]} создана успешно. Ее ID: {createPdqlGroupsRequest.json()["id"]}')
-                pgqlGroupsDictionary[row[0]] = createPdqlGroupsRequest.json()["id"]
+                querriesGroupsDictionary[row[0]] = createPdqlGroupsRequest.json()["id"]
             else:
                 print(f'Произошла ошибка при создании группы {row[0]}. Группа не будет создана. Необходимо ли остановить скрипт? Yes/No')
                 if input() == 'Yes':
@@ -352,8 +359,8 @@ def createPdqlGroups(querriesGroupsCsvFile):
             print('\n')
 
 #ЗАПРОСЫ PDQL || ФУНКЦИЯ создание pdql запросов с использованием словаря содержащего соотнесение созданных групп PDQL запросов и PDQL запросов
-def createPdqlQueriesWithDictionary(querriesCsvFile):
-    logging.info('Вызвана функция createPdqlQueriesWithDictionary для создания групп запросов с использованием локального словаря.')
+def createPdqlQueries(querriesCsvFile):
+    logging.info('Вызвана функция createPdqlQueries для создания групп запросов с использованием локального словаря.')
     with open(querriesCsvFile, 'r', newline='', encoding='utf-8') as pdqlQueriesFile:
         csvReader = csv.reader(pdqlQueriesFile, delimiter=';')
         next(csvReader)
@@ -387,8 +394,6 @@ def createPdqlQueriesWithDictionary(querriesCsvFile):
 
     return None
 
-def createPdqlQueriesWuthRequest(querriesCsvFile):
-    return None
 
 #-------------------------- INT MAIN --------------------------------------------
 #--------------------ОСНОВНОЙ КОД ПРОГРАММЫ--------------------------------------
@@ -397,10 +402,10 @@ def createPdqlQueriesWuthRequest(querriesCsvFile):
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 #глобальные переменные
-bearerToken = None                      #токен MP10 Core
-werePqlGroupsCreated = False            #флаг создания групп PDQL запросов нужен для PDQL запросов
-assetsGroupsDictionary = {}             #словарь с группами активов
-pgqlGroupsDictionary = {}               #словарь с группами PDQL запросов
+bearerToken = None                                                          #токен MP10 Core
+werePqlGroupsCreated = False                                                #флаг создания групп PDQL запросов нужен для PDQL запросов
+assetsGroupsDictionary = {"Root":"00000000-0000-0000-0000-000000000002"}    #словарь с группами активов
+querriesGroupsDictionary = {"CommonRootFolder":"CommonRootFolder"}          #словарь с группами PDQL запросов
 
 #установление пути к файлам манифестам
 currentDirectory = os.path.dirname(os.path.abspath(__file__))                           #текущая директория
@@ -408,7 +413,7 @@ manifestsDirectory = os.path.join(currentDirectory, 'deployment_manifests')     
 groupsCsvFile = os.path.join(manifestsDirectory, "assets_groups_manifest.csv")          #манифест с настройками групп активов
 querriesGroupsCsvFile = os.path.join(manifestsDirectory, "pdql_groups_manifest.csv")    #манифест с настройками групп PDQL запросов
 querriesCsvFile = os.path.join(manifestsDirectory, "pdql_manifest.csv")                 #манифест с настройками PDQL запросов
-#querriesGroupsCsvFile = os.path.join(manifestsDirectory, "groupsOfQuerries.json")      #файл, куда скачаваем информацию о группах PDQL запросов
+querriesGroupsJsonFile = os.path.join(manifestsDirectory, "groupsOfQuerries.json")       #файл, куда скачаваем информацию о группах PDQL запросов
 
 #логирование ошибок
 loggingDirectory = os.path.join(currentDirectory, 'logging')                            #установление пути к директории с логами
@@ -450,10 +455,8 @@ if(getYesNoInput(f'Необходимо ли создать группы PDQL з
 print('-------------------------------PDQL запросы----------------------------------\n')
 if(getYesNoInput(f'Необходимо ли создать PDQL запросы из {querriesCsvFile}? Yes/No')):
     print('\n')
-    if werePqlGroupsCreated:
-        createPdqlQueriesWithDictionary(querriesCsvFile)
-    else:
-        createPdqlQueriesWuthRequest(querriesCsvFile)
+    downloadPdqlGroupsData(querriesGroupsJsonFile)
+    createPdqlQueries(querriesCsvFile)
 
 logging.info('Программа завершена.')
 #print('Необходимо ли создать задачи? Yes/No')
