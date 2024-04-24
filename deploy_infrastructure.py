@@ -213,7 +213,7 @@ def findGroupIdRecursive(groupsData, targetGroupName):
             result, found = findGroupIdRecursive(group["children"], targetGroupName)
             if found:
                 return result, True
-            
+        
     return '00000000-0000-0000-0000-000000000002', False  # Группа не найдена, возвращаем ID root и False
 
 #ГРУППЫ АКТИВОВ || ФУНКЦИЯ проверки статуса создания группы
