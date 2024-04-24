@@ -148,7 +148,7 @@ def getTokenMpx():
         'response_type':'token',
         'scope':'mpx.api',
     }
-    getTokenUrl = {rootUrl} + "/connect/token"
+    getTokenUrl = rootUrl + ":3334/connect/token"
     #отправка запроса
     print('\nОтправляется запрос на получение токена доступа для mpx...')
     getAuthToken = sendAnyPostRequest(getTokenUrl, headersOfRequest, dataGetAuthToken, None, 'получение токена доступа для mpx')
