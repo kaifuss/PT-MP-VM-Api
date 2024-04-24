@@ -444,6 +444,7 @@ downloadPdqlGroupsData(querriesGroupsJsonFile)
 #создание групп PDQL запросов
 print('-------------------------------Группы запросов------------------------------\n')
 if(getYesNoInput(f'Необходимо ли создать группы PDQL запросов из {querriesGroupsCsvFile} ?')):
+    createPdqlGroups(querriesGroupsCsvFile)
     print('\n')
 
 #создание PDQL запросов
