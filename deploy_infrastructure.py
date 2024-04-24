@@ -39,8 +39,8 @@ import urllib3
 #ГЛОБАЛЬНЫЕ || ФУНКЦИЯ получения ввода Yes / No от юзера
 def getYesNoInput(Action):
     print(Action)
-    logging.info(f'Пользователя спросили {Action}.')
     while True:
+        logging.info(f'Пользователя спросили {Action}.')
         inputAnswer = input('[Yes, Y, Да, Д| / [No, N, Нет, Н]: ').strip().lower()
         if inputAnswer in ['yes', 'y', 'да', 'д']:
             logging.info('Пользователь согласился на действие.')
