@@ -358,9 +358,9 @@ def createPdqlGroups(querriesGroupsCsvFile):
                     logging.error(f'Не удалось создать группу {row[0]}. Пользователь продолжил выполнение скрипта.')
             print('\n')
 
-#ЗАПРОСЫ PDQL || ФУНКЦИЯ создание pdql запросов с использованием словаря содержащего соотнесение созданных групп PDQL запросов и PDQL запросов
+#ЗАПРОСЫ PDQL || ФУНКЦИЯ создание PDQL запросов
 def createPdqlQueries(querriesCsvFile):
-    logging.info('Вызвана функция createPdqlQueries для создания групп запросов с использованием локального словаря.')
+    logging.info('Вызвана функция createPdqlQueries для создания запросов.')
     with open(querriesCsvFile, 'r', newline='', encoding='utf-8') as pdqlQueriesFile:
         csvReader = csv.reader(pdqlQueriesFile, delimiter=';')
         next(csvReader)
@@ -369,11 +369,8 @@ def createPdqlQueries(querriesCsvFile):
             "Content-Type": "application/json",
             "Authorization": f"Bearer {bearerToken}"
         }
-
         for row in csvReader:
-            print('-----------------------------------------------------------------------')
             print(f"Выполняется чтение параметров для PDQL запроса: {row[0]}")
-
             rowData = {
                 "displayName": row[0],
                 "filterPdql": row[1],
@@ -383,16 +380,14 @@ def createPdqlQueries(querriesCsvFile):
                 "selectionPdql": row[5],
                 "type": row[6],
             }
-
             if row[1] == "none":
                 del rowData["filterPdql"]
-                
-            response = requests.post(rootUrl + "/api/assets_temporal_readmodel/v1/stored_queries/queries", headers=headers, json=rowData, verify=False)
+            createQuerryUrl = rootUrl + "/api/assets_temporal_readmodel/v1/stored_queries/queries"
+            print("Отправляется запрос на создание PDQL запроса: " + row[0])
+            response = sendAnyPostRequest(createQuerryUrl, headers, None, rowData, f'создание PDQL запроса: {row[0]}')
             response.raise_for_status()
             if response.status_code == 200:
-                print('PDQL запрос ' + row[0] + ' создан успешно. ID: ' + response.json()["id"])
-
-    return None
+                print('PDQL запрос ' + row[0] + ' создан успешно. ID: ' + response.json()["id"] + '\n')
 
 
 #-------------------------- INT MAIN --------------------------------------------
@@ -444,18 +439,17 @@ if(getYesNoInput(f'Необходимо ли создать группы акт�
     print('\n')
     createAssetsFromCsv(groupsCsvFile)
 
+downloadPdqlGroupsData(querriesGroupsJsonFile)
+
 #создание групп PDQL запросов
 print('-------------------------------Группы запросов------------------------------\n')
 if(getYesNoInput(f'Необходимо ли создать группы PDQL запросов из {querriesGroupsCsvFile} ?')):
     print('\n')
-    createPdqlGroups(querriesGroupsCsvFile)
-    werePqlGroupsCreated = True
 
 #создание PDQL запросов
 print('-------------------------------PDQL запросы----------------------------------\n')
 if(getYesNoInput(f'Необходимо ли создать PDQL запросы из {querriesCsvFile}? Yes/No')):
     print('\n')
-    downloadPdqlGroupsData(querriesGroupsJsonFile)
     createPdqlQueries(querriesCsvFile)
 
 logging.info('Программа завершена.')
