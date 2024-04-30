@@ -222,7 +222,7 @@ def checkGroupCreated(operationId, groupName):
             break
 
 #ГРУППЫ АКТИВОВ || ФУНКЦИЯ групп CSV -> JSON + сохраняем на сервер
-def createAssetsFromCsv(csvFilePath):
+def createAssetsFromCsv(csvFilePath, assetsGroupsDictionary):
     logging.info('Вызов функции createAssetsFromCsv для создания групп активов из CSV файла.')
     # Открываем CSV-файл
     with open(csvFilePath, 'r', newline='', encoding='utf-8') as assetsGroupsFile:
@@ -232,11 +232,13 @@ def createAssetsFromCsv(csvFilePath):
             print('-----------------------------------------------------------------------')
             logging.info(f'Выполянется чтение параметров для создания группы: {row[0]}')
             print(f'Выполянется чтение параметров для создания группы: {row[0]}')
+            parentIdTemp = assetsGroupsDictionary.get(row[2])
+            if parentIdTemp is None: parentIdTemp = findAssetsGroupID(row[2])
             # Создаем словарь для хранения данных текущей строки
             rowData = {
                 "name": row[0],
                 "description": row[1],
-                "parentId": assetsGroupsDictionary.get(row[2], findAssetsGroupID(row[2])),
+                "parentId": parentIdTemp,
                 "groupType": row[3],
                 "predicate": row[4],
                 "metrics": {
@@ -399,7 +401,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 #глобальные переменные
 bearerToken = None                                                          #токен MP10 Core
 werePqlGroupsCreated = False                                                #флаг создания групп PDQL запросов нужен для PDQL запросов
-assetsGroupsDictionary = {"Root":"00000000-0000-0000-0000-000000000002"}    #словарь с группами активов
+assetsGroupsDictionary = {'Root':'00000000-0000-0000-0000-000000000002'}    #словарь с группами активов
 querriesGroupsDictionary = {"CommonRootFolder":"CommonRootFolder"}          #словарь с группами PDQL запросов
 
 #установление пути к файлам манифестам
@@ -437,10 +439,9 @@ while True:
 print('-------------------------------Группы активов-------------------------------\n')
 if(getYesNoInput(f'Необходимо ли создать группы активов из {groupsCsvFile} ?')): 
     print('\n')
-    createAssetsFromCsv(groupsCsvFile)
+    createAssetsFromCsv(groupsCsvFile, assetsGroupsDictionary)
 
 downloadPdqlGroupsData(querriesGroupsJsonFile)
-
 #создание групп PDQL запросов
 print('-------------------------------Группы запросов------------------------------\n')
 if(getYesNoInput(f'Необходимо ли создать группы PDQL запросов из {querriesGroupsCsvFile} ?')):
