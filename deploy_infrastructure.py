@@ -331,10 +331,12 @@ def createPdqlGroups(querriesGroupsCsvFile):
             print('-----------------------------------------------------------------------\n')
             logging.info(f'Выполняется чтение параметров для создания группы PDQL запросов: {row[0]}')
             print(f'Выполняется чтение параметров для создания группы PDQL запросов: {row[0]}')
+            parentIdTemp = querriesGroupsDictionary.get(row[1])
+            if parentIdTemp is None: parentIdTemp = findQuerriesGroupId(row[1], querriesGroupsJsonFile)
             #Параметры группы из текущей строки
             rowData = {
                 "displayName": row[0],
-                "parentId": querriesGroupsDictionary.get(row[1], findQuerriesGroupId(row[1])),
+                "parentId": parentIdTemp,
                 "type": row[2]
             }
             headers = {
