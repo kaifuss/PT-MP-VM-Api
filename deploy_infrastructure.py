@@ -408,7 +408,7 @@ manifestsDirectory = os.path.join(currentDirectory, 'deployment_manifests')     
 groupsCsvFile = os.path.join(manifestsDirectory, "assets_groups_manifest.csv")          #манифест с настройками групп активов
 querriesGroupsCsvFile = os.path.join(manifestsDirectory, "pdql_groups_manifest.csv")    #манифест с настройками групп PDQL запросов
 querriesCsvFile = os.path.join(manifestsDirectory, "pdql_manifest.csv")                 #манифест с настройками PDQL запросов
-querriesGroupsJsonFile = os.path.join(manifestsDirectory, "groupsOfQuerries.json")       #файл, куда скачаваем информацию о группах PDQL запросов
+querriesGroupsJsonFile = os.path.join(manifestsDirectory, "groupsOfQuerries.json")      #файл, куда скачаваем информацию о группах PDQL запросов
 
 #логирование ошибок
 loggingDirectory = os.path.join(currentDirectory, 'logging')                            #установление пути к директории с логами
