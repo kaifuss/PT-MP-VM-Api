@@ -144,9 +144,9 @@ def getTokenMpx():
         'password': adminPassword,  
         'client_id':'mpx',
         'client_secret': clientSecret,
-        'grant_type':'client_credentials',
+        'grant_type':'password',
         'response_type':'token',
-        'scope':'mpx.api',
+        'scope':'authorization offline_access mpx.api',
     }
     getTokenUrl = rootUrl + ":3334/connect/token"
     #отправка запроса
