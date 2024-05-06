@@ -114,14 +114,14 @@ def sendAnyGetRequest(requestUrl, headers, data, json_data, requestType):
         return None
 
 #ГЛОБАЛЬНЫЕ || ФУНКЦИЯ получения clientSecret если есть деплоер
-def getClientSecret():
-    logging.info('Вызов функции getClientSecret для получения clientSecret')
+def getMpxClientSecret():
+    logging.info('Вызов функции getMpxClientSecret для получения MpxClientSecret')
 
     deployerPath = os.path.dirname('/var/lib/deployer')
     deployedRolesPath = os.path.dirname('/var/lib/deployed-roles/Deployment-Application')
 
     if os.path.exists(deployerPath) and os.path.exists(deployedRolesPath):
-        print('Скрипт запущен на сервере с ролью Deployer. CLientSecret будет взят из параметров params.yaml')     
+        print('Скрипт запущен на сервере с ролью Deployer. MpxCLientSecret будет взят из параметров params.yaml')     
         # Поиск файлов по маске
         filePaths = glob.glob('/var/lib/deployer/role_instances/core*/params.yaml')
         # Вывод найденных файлов
@@ -129,12 +129,12 @@ def getClientSecret():
             with open(filePath, 'r') as file:
                 for line in file:
                     if 'ClientSecret' in line:
-                        logging.info('Найден clientSecret в params.yaml')
-                        clientSecret = line.split(':')[1].strip()
-                        return clientSecret
+                        logging.info('Найден MpxClientSecret в params.yaml')
+                        MpxClientSecret = line.split(':')[1].strip()
+                        return MpxClientSecret
     else:
-        clientSecret = input('Введите ClientSecret: ')
-        return clientSecret
+        MpxClientSecret = input('Введите ClientSecret: ')
+        return MpxClientSecret
 
 #ГЛОБАЛЬНЫЕ || ФУНКЦИЯ получения токена доступа
 def getTokenMpx():
@@ -154,9 +154,7 @@ def getTokenMpx():
             else:
                 logging.info('Логин и пароль пользователя MP10 введены верно')
                 break
-    #ввод clientSecret
-    clientSecret = getClientSecret()
-
+    clientSecret = getMpxClientSecret()
     #заголовки запроса
     headersOfRequest = {
         'Content-Type': 'application/x-www-form-urlencoded',
