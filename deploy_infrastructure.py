@@ -11,7 +11,7 @@ print("""
 import importlib
 import sys
 import subprocess
-required_libraries = ['datetime', 'csv', 'getpass', 'json', 'logging', 'os', 'requests', 'time', 'urllib3']
+required_libraries = ['datetime', 'csv', 'getpass', 'json', 'logging', 'os', 'requests', 'time', 'urllib3', 'glob']
 
 for lib in required_libraries:
     try:
@@ -28,6 +28,7 @@ for lib in required_libraries:
 from datetime import datetime
 import csv
 import getpass
+import glob
 import json
 import logging
 import os
@@ -111,7 +112,30 @@ def sendAnyGetRequest(requestUrl, headers, data, json_data, requestType):
         logging.error(f'Неизвестная ошибка при выполнении запроса на {requestType} на url {requestUrl}: {err}')
         print(f'Произошла ошибка при выполнении запроса. Логи находятся в {loggingFile}')
         return None
-    
+
+#ГЛОБАЛЬНЫЕ || ФУНКЦИЯ получения clientSecret если есть деплоер
+def getClientSecret():
+    logging.info('Вызов функции getClientSecret для получения clientSecret')
+
+    deployerPath = os.path.dirname('/var/lib/deployer')
+    deployedRolesPath = os.path.dirname('/var/lib/deployed-roles/Deployment-Application')
+
+    if os.path.exists(deployerPath) and os.path.exists(deployedRolesPath):
+        print('Скрипт запущен на сервере с ролью Deployer. CLientSecret будет взят из параметров params.yaml')     
+        # Поиск файлов по маске
+        filePaths = glob.glob('/var/lib/deployer/role_instances/core*/params.yaml')
+        # Вывод найденных файлов
+        for filePath in filePaths:
+            with open(filePath, 'r') as file:
+                for line in file:
+                    if 'ClientSecret' in line:
+                        logging.info('Найден clientSecret в params.yaml')
+                        clientSecret = line.split(':')[1].strip()
+                        return clientSecret
+    else:
+        clientSecret = input('Введите ClientSecret: ')
+        return clientSecret
+
 #ГЛОБАЛЬНЫЕ || ФУНКЦИЯ получения токена доступа
 def getTokenMpx():
     logging.info('Вызов функции getTokenMpx для получения токена доступа')
@@ -120,7 +144,6 @@ def getTokenMpx():
         adminPassword = 'P@ssw0rd'
     else:
         adminName = input('Введите логин пользователя MP10: ') 
-        #ввод логина и пароля
         while True: 
             adminPassword = getpass.getpass('Введите пароль пользователя MP10: ')
             adminPasswordCheck = getpass.getpass('Повторите пароль пользователя MP10: ')
@@ -132,8 +155,8 @@ def getTokenMpx():
                 logging.info('Логин и пароль пользователя MP10 введены верно')
                 break
     #ввод clientSecret
-    clientSecret = input('Введите clientSecret: ')
-    logging.info('Введен clientSecret')
+    clientSecret = getClientSecret()
+
     #заголовки запроса
     headersOfRequest = {
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -152,7 +175,6 @@ def getTokenMpx():
     #отправка запроса
     print('\nОтправляется запрос на получение токена доступа для mpx...')
     getAuthToken = sendAnyPostRequest(getTokenUrl, headersOfRequest, dataGetAuthToken, None, 'получение токена доступа для mpx')
-    
     if getAuthToken is None:
         logging.error('Не удалось получить токен доступа. Вернулся объект None')
         return None
@@ -404,7 +426,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 bearerToken = None                                                          #токен MP10 Core
 werePqlGroupsCreated = False                                                #флаг создания групп PDQL запросов нужен для PDQL запросов
 assetsGroupsDictionary = {'Root':'00000000-0000-0000-0000-000000000002'}    #словарь с группами активов
-querriesGroupsDictionary = {"CommonRootFolder":"CommonRootFolder"}          #словарь с группами PDQL запросов
+querriesGroupsDictionary = {'CommonRootFolder':'CommonRootFolder'}          #словарь с группами PDQL запросов
 
 #установление пути к файлам манифестам
 currentDirectory = os.path.dirname(os.path.abspath(__file__))                           #текущая директория
