@@ -12,7 +12,6 @@ import importlib
 import sys
 import subprocess
 required_libraries = ['datetime', 'csv', 'getpass', 'json', 'logging', 'os', 'requests', 'time', 'urllib3', 'glob']
-
 for lib in required_libraries:
     try:
         importlib.import_module(lib)
@@ -39,9 +38,9 @@ import urllib3
 #-------------------------------------ГЛОБАЛЬНЫЕ-----------------------------------------#
 #ГЛОБАЛЬНЫЕ || ФУНКЦИЯ получения ввода Yes / No от юзера
 def getYesNoInput(Action):
-    print(Action)
+    logging.info(f'Пользователя спросили {Action}.')
     while True:
-        logging.info(f'Пользователя спросили {Action}.')
+        print(Action)
         inputAnswer = input('[Yes, Y, Да, Д| / [No, N, Нет, Н]: ').strip().lower()
         if inputAnswer in ['yes', 'y', 'да', 'д']:
             logging.info('Пользователь согласился на действие.')
@@ -51,16 +50,16 @@ def getYesNoInput(Action):
             return False
         else:
             logging.error('Некорректный ввод от пользователя.')
-            print('Некорректный ввод. Повторите попытку.')
+            print('Некорректный ввод. Повторите попытку.\n')
 
 #ГЛОБАЛЬНЫЕ || ФУНКЦИЯ универсальная отправки POST запроса 
 def sendAnyPostRequest(requestUrl, headers, data, jsonData, requestType):
     try:
         if jsonData:
-            logging.info(f'Отправлен POST запрос на {requestType} с JSON данными на url {requestUrl}')
+            logging.info(f'Отправляется POST запрос на {requestType} с JSON данными на URL: {requestUrl}')
             response = requests.post(requestUrl, headers=headers, json=jsonData, verify=False)
         else:
-            logging.info(f'Отправлен POST запрос на {requestType} с данными на url {requestUrl}')
+            logging.info(f'Отправляется POST запрос на {requestType} с DATA данными на URL: {requestUrl}')
             response = requests.post(requestUrl, headers=headers, data=data, verify=False)
         response.raise_for_status()
         logging.info(f'Запрос на {requestType} выполнен успешно на url {requestUrl}. Статус код: {response.status_code}')
