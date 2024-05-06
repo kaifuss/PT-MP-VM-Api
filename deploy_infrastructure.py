@@ -66,21 +66,21 @@ def sendAnyPostRequest(requestUrl, headers, data, jsonData, requestType):
         return response
     
     except requests.exceptions.HTTPError as err:
-        logging.error(f'HTTP-ошибка при выполнении {requestType} запроса на {requestUrl}: {err}')
+        logging.error(f'HTTP-ошибка при выполнении запроса на URL: {requestUrl}:\n {err}')
         logging.error(f'Ответ сервера на запрос: \n{response.text}')
-        print(f'Произошла ошибка при выполнении запроса на {requestType}. Логи находятся в {loggingFile}')
+        print(f'Произошла HTTP-ошибка при выполнении запроса на {requestType}.\nЛоги находятся в {loggingDirectory}+{loggingFile}')
         return None
 
     except requests.exceptions.RequestException as err:
         logging.error(f'Ошибка отправки запроса на {requestType} на url {requestUrl}: {err}')
         logging.error(f'Ответ сервера на запрос: \n{response.text}')
-        print(f'Произошла ошибка при выполнении запроса на {requestType}. Логи находятся в {loggingFile}')
+        print(f'Произошла ошибка отправки запроса {requestType}.\nЛоги находятся в {loggingDirectory}+{loggingFile}')
         return None
     
     except Exception as err:
         logging.error(f'Неизвестная ошибка при выполнении запроса на {requestType} на url {requestUrl}: {err}')
         logging.error(f'Ответ сервера на запрос: \n{response.text}')
-        print(f'Произошла ошибка при выполнении запроса на {requestType}. Логи находятся в {loggingFile}')
+        print(f'Произошла неизвестная ошибка при выполнении запроса на {requestType}.\nЛоги находятся в {loggingDirectory}+{loggingFile}')
         return None
 
 #ГЛОБАЛЬНЫЕ || ФУНКЦИЯ универсальная отправки GET запроса 
@@ -99,17 +99,17 @@ def sendAnyGetRequest(requestUrl, headers, data, json_data, requestType):
     
     except requests.exceptions.HTTPError as err:
         logging.error(f'HTTP-ошибка при выполнении запроса на {requestType} на url {requestUrl}: {err}')
-        print(f'Произошла ошибка при выполнении запроса. Логи находятся в {loggingFile}')
+        print(f'Произошла ошибка при выполнении запроса.\nЛоги находятся в {loggingDirectory}+{loggingFile}')
         return None
 
     except requests.exceptions.RequestException as err:
         logging.error(f'Ошибка отправки запроса на {requestType} на url {requestUrl}: {err}')
-        print(f'Произошла ошибка при выполнении запроса. Логи находятся в {loggingFile}')
+        print(f'Произошла ошибка при выполнении запроса.\nЛоги находятся в {loggingDirectory}+{loggingFile}')
         return None
     
     except Exception as err:
         logging.error(f'Неизвестная ошибка при выполнении запроса на {requestType} на url {requestUrl}: {err}')
-        print(f'Произошла ошибка при выполнении запроса. Логи находятся в {loggingFile}')
+        print(f'Произошла ошибка при выполнении запроса.\nЛоги находятся в {loggingDirectory}+{loggingFile}')
         return None
 
 #ГЛОБАЛЬНЫЕ || ФУНКЦИЯ получения clientSecret если есть деплоер
