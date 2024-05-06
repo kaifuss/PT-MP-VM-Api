@@ -52,64 +52,41 @@ def getYesNoInput(Action):
             logging.error('Некорректный ввод от пользователя.')
             print('Некорректный ввод. Повторите попытку.\n')
 
-#ГЛОБАЛЬНЫЕ || ФУНКЦИЯ универсальная отправки POST запроса 
-def sendAnyPostRequest(requestUrl, headers, data, jsonData, requestType):
+#ГЛОБАЛЬНЫЕ || ФУНКЦИЯ универсальная отправки любого {method} запроса 
+def sendAnyRequest(requestMethod, requestUrl, headers, data, jsonData, requestPurpose):
     try:
         if jsonData:
-            logging.info(f'Отправляется POST запрос на {requestType} с JSON данными на URL: {requestUrl}')
-            response = requests.post(requestUrl, headers=headers, json=jsonData, verify=False)
+            logging.info(f'Отправляется {requestMethod} запрос для {requestPurpose} с JSON данными на URL: {requestUrl}')
+            if requestMethod == 'GET':
+                response = requests.get(requestUrl, headers=headers, json=jsonData, verify=False)
+            elif requestMethod == 'POST':
+                response = requests.post(requestUrl, headers=headers, json=jsonData, verify=False)
         else:
-            logging.info(f'Отправляется POST запрос на {requestType} с DATA данными на URL: {requestUrl}')
-            response = requests.post(requestUrl, headers=headers, data=data, verify=False)
+            logging.info(f'Отправляется {requestMethod} запрос для {requestPurpose} с DATA данными на URL: {requestUrl}')
+            if requestMethod == 'GET':
+                response = requests.get(requestUrl, headers=headers, data=data, verify=False)
+            elif requestMethod == 'POST':
+                response = requests.post(requestUrl, headers=headers, data=data, verify=False)
         response.raise_for_status()
-        logging.info(f'Запрос на {requestType} выполнен успешно на url {requestUrl}. Статус код: {response.status_code}')
+        logging.info(f'Запрос выполнен успешно. Статус код: {response.status_code}')
         return response
     
     except requests.exceptions.HTTPError as err:
-        logging.error(f'HTTP-ошибка при выполнении запроса на URL: {requestUrl}:\n {err}')
-        logging.error(f'Ответ сервера на запрос: \n{response.text}')
-        print(f'Произошла HTTP-ошибка при выполнении запроса на {requestType}.\nЛоги находятся в {loggingDirectory}+{loggingFile}')
+        logging.error(f'HTTP-ошибка при выполнении запроса на URL: {requestUrl}:\n{err}')
+        if response.text: logging.error(f'Ответ сервера на запрос: \n{response.text}')
+        print(f'Произошла HTTP-ошибка при выполнении запроса для {requestPurpose}.\nЛоги находятся в файле {loggingDirectory}+{loggingFile}')
         return None
 
     except requests.exceptions.RequestException as err:
-        logging.error(f'Ошибка отправки запроса на {requestType} на url {requestUrl}: {err}')
-        logging.error(f'Ответ сервера на запрос: \n{response.text}')
-        print(f'Произошла ошибка отправки запроса {requestType}.\nЛоги находятся в {loggingDirectory}+{loggingFile}')
+        logging.error(f'Ошибка отправки запроса на {requestPurpose} на UFL: {requestUrl}:\n{err}')
+        if response.text: logging.error(f'Ответ сервера на запрос: \n{response.text}')
+        print(f'Произошла ошибка отправки запроса для {requestPurpose}.\nЛоги находятся в файле {loggingDirectory}+{loggingFile}')
         return None
     
     except Exception as err:
-        logging.error(f'Неизвестная ошибка при выполнении запроса на {requestType} на url {requestUrl}: {err}')
-        logging.error(f'Ответ сервера на запрос: \n{response.text}')
-        print(f'Произошла неизвестная ошибка при выполнении запроса на {requestType}.\nЛоги находятся в {loggingDirectory}+{loggingFile}')
-        return None
-
-#ГЛОБАЛЬНЫЕ || ФУНКЦИЯ универсальная отправки GET запроса 
-def sendAnyGetRequest(requestUrl, headers, data, json_data, requestType):
-    try:
-        if json_data:
-            logging.info(f'Отправлен GET запрос на {requestType} с JSON данными на url {requestUrl}')
-            response = requests.get(requestUrl, headers=headers, json=json_data, verify=False)
-        else:
-            logging.info(f'Отправлен GET запрос на {requestType} с данными на url {requestUrl}')
-            response = requests.get(requestUrl, headers=headers, data=data, verify=False)
-        response.raise_for_status()  # Проверка статуса ответа
-
-        logging.info(f'Запрос на {requestType} выполнен успешно на url {requestUrl}.')
-        return response
-    
-    except requests.exceptions.HTTPError as err:
-        logging.error(f'HTTP-ошибка при выполнении запроса на {requestType} на url {requestUrl}: {err}')
-        print(f'Произошла ошибка при выполнении запроса.\nЛоги находятся в {loggingDirectory}+{loggingFile}')
-        return None
-
-    except requests.exceptions.RequestException as err:
-        logging.error(f'Ошибка отправки запроса на {requestType} на url {requestUrl}: {err}')
-        print(f'Произошла ошибка при выполнении запроса.\nЛоги находятся в {loggingDirectory}+{loggingFile}')
-        return None
-    
-    except Exception as err:
-        logging.error(f'Неизвестная ошибка при выполнении запроса на {requestType} на url {requestUrl}: {err}')
-        print(f'Произошла ошибка при выполнении запроса.\nЛоги находятся в {loggingDirectory}+{loggingFile}')
+        logging.error(f'Неизвестная ошибка при выполнении запроса на URL: {requestUrl}:\n{err}')
+        if response.text: logging.error(f'Ответ сервера на запрос: \n{response.text}')
+        print(f'Произошла неизвестная ошибка при выполнении запроса для {requestPurpose}.\nЛоги находятся в файле {loggingDirectory}+{loggingFile}')
         return None
 
 #ГЛОБАЛЬНЫЕ || ФУНКЦИЯ получения clientSecret если есть деплоер
@@ -118,7 +95,6 @@ def getMpxClientSecret():
 
     deployerPath = os.path.dirname('/var/lib/deployer')
     deployedRolesPath = os.path.dirname('/var/lib/deployed-roles/Deployment-Application')
-
     if os.path.exists(deployerPath) and os.path.exists(deployedRolesPath):
         print('Скрипт запущен на сервере с ролью Deployer. MpxCLientSecret будет взят из параметров params.yaml')     
         # Поиск файлов по маске
@@ -138,7 +114,7 @@ def getMpxClientSecret():
 #ГЛОБАЛЬНЫЕ || ФУНКЦИЯ получения токена доступа
 def getTokenMpx():
     logging.info('Вызов функции getTokenMpx для получения токена доступа')
-    if getYesNoInput('Использовать креды по умолчанию: Administrator/P@ssw0rd? Yes/No'):
+    if getYesNoInput('Использовать креды по умолчанию: Administrator/P@ssw0rd?'):
         adminName = 'Administrator'
         adminPassword = 'P@ssw0rd'
     else:
@@ -171,7 +147,7 @@ def getTokenMpx():
     getTokenUrl = rootUrl + ":3334/connect/token"
     #отправка запроса
     print('\nОтправляется запрос на получение токена доступа для mpx...')
-    getAuthToken = sendAnyPostRequest(getTokenUrl, headersOfRequest, dataGetAuthToken, None, 'получение токена доступа для mpx')
+    getAuthToken = sendAnyRequest('POST', getTokenUrl, headersOfRequest, dataGetAuthToken, None, 'получения токена доступа для mpx')
     if getAuthToken is None:
         logging.error('Не удалось получить токен доступа. Вернулся объект None')
         return None
@@ -188,7 +164,7 @@ def findAssetsGroupID(parentName):
     # Запрос на получение информации о всех группах
     groupsUrl = f"{rootUrl}/api/assets_temporal_readmodel/v2/groups/hierarchy"
     headers = {'Authorization': f'Bearer {bearerToken}'}
-    response = sendAnyGetRequest(groupsUrl, headers, None, None, f'поиск группы {parentName}')
+    response = sendAnyRequest('GET', groupsUrl, headers, None, None, f'поиска группы {parentName}')
     groupsData = response.json()
 
     # Поиск родительской группы активов по имени
@@ -226,7 +202,7 @@ def checkGroupCreated(operationId, groupName):
     operationStatusUrl = f"{rootUrl}/api/assets_processing/v2/groups/operations/{operationId}"
     headers = {'Authorization': f'Bearer {bearerToken}'}
     while True:
-        response = sendAnyGetRequest(operationStatusUrl, headers, None, None, f'проверку статуса создания группы {groupName}')
+        response = sendAnyRequest('GET', operationStatusUrl, headers, None, None, f'проверки статуса создания группы {groupName}')
         if response is not None and response.status_code != 202:
             logging.info(f'Группа {groupName} создана. Ее ID {response.json()}')
             print(f'Группа {groupName} создана. Ее ID {response.json()}')
@@ -288,7 +264,7 @@ def createAssetsFromCsv(csvFilePath, assetsGroupsDictionary):
             print(f'Отправляется запрос на создание группы: {row[0]}')
             createAssetsGroupsUrl = rootUrl + '/api/assets_processing/v2/groups' 
             headers = {'Authorization': 'Bearer ' + bearerToken}
-            createGroupsRequest = sendAnyPostRequest(createAssetsGroupsUrl, headers, None, rowData, f'создание группы {row[0]}')
+            createGroupsRequest = sendAnyRequest('POST', createAssetsGroupsUrl, headers, None, rowData, f'создания группы {row[0]}')
             
             if createGroupsRequest is None:
                 print(f'Произошла ошибка при создании группы {row[0]}. Группа не будет создана.')
@@ -313,7 +289,7 @@ def downloadPdqlGroupsData(querriesGroupsDictionary):
         }
     querriesHierarchyUrl = rootUrl + '/api/assets_temporal_readmodel/v1/stored_queries/folders/queries/'
     print("Выполняется актуализация информации об иерархии групп PDQL запросов.")
-    response = sendAnyGetRequest(querriesHierarchyUrl, headers, None, None, "скачивание информации о группах PDQL запросов")
+    response = sendAnyRequest('GET', querriesHierarchyUrl, headers, None, None, "скачивания информации о группах PDQL запросов")
     response.raise_for_status()
     with open (querriesGroupsDictionary, 'w', encoding='utf-8') as querriesGroupsFile:
         json.dump(response.json(), querriesGroupsFile, ensure_ascii=False)
@@ -366,14 +342,14 @@ def createPdqlGroups(querriesGroupsCsvFile):
             # Отправляем запрос на создание групп PDQL запросов
             print(f'Отправляется запрос на создание группы PDQL запросов: {row[0]}')
             createPdqlGroupsUrl = rootUrl + '/api/assets_temporal_readmodel/v1/stored_queries/folders/queries'
-            createPdqlGroupsRequest = sendAnyPostRequest(createPdqlGroupsUrl, headers, None, rowData, f'создание группы запросов: {row[0]}')
+            createPdqlGroupsRequest = sendAnyRequest('POST', createPdqlGroupsUrl, headers, None, rowData, f'создания группы запросов: {row[0]}')
 
             if createPdqlGroupsRequest.status_code == 200:
                 logging.info(f'Группа {row[0]} создана успешно. Ее ID: {createPdqlGroupsRequest.json()["id"]}')
                 print(f'Группа {row[0]} создана успешно. Ее ID: {createPdqlGroupsRequest.json()["id"]}')
                 querriesGroupsDictionary[row[0]] = createPdqlGroupsRequest.json()["id"]
             else:
-                print(f'Произошла ошибка при создании группы {row[0]}. Группа не будет создана. Необходимо ли остановить скрипт? Yes/No')
+                print(f'Произошла ошибка при создании группы {row[0]}. Группа не будет создана. Необходимо ли остановить скрипт?')
                 if input() == 'Yes':
                     logging.error(f'Не удалось создать группу {row[0]}. Пользователь прервал выполнение скрипта.')
                     break
@@ -407,7 +383,7 @@ def createPdqlQueries(querriesCsvFile):
                 del rowData["filterPdql"]
             createQuerryUrl = rootUrl + "/api/assets_temporal_readmodel/v1/stored_queries/queries"
             print("Отправляется запрос на создание PDQL запроса: " + row[0])
-            response = sendAnyPostRequest(createQuerryUrl, headers, None, rowData, f'создание PDQL запроса: {row[0]}')
+            response = sendAnyRequest('POST', createQuerryUrl, headers, None, rowData, f'создания PDQL запроса: {row[0]}')
             response.raise_for_status()
             if response.status_code == 200:
                 print('PDQL запрос ' + row[0] + ' создан успешно. ID: ' + response.json()["id"] + '\n')
@@ -471,7 +447,7 @@ if(getYesNoInput(f'Необходимо ли создать группы PDQL з
 
 #создание PDQL запросов
 print('-------------------------------PDQL запросы----------------------------------\n')
-if(getYesNoInput(f'Необходимо ли создать PDQL запросы из {querriesCsvFile}? Yes/No')):
+if(getYesNoInput(f'Необходимо ли создать PDQL запросы из {querriesCsvFile}?')):
     print('\n')
     createPdqlQueries(querriesCsvFile)
 
