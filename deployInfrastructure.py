@@ -318,7 +318,6 @@ def findQuerriesGroupId(groupsData, displayName):
 def createPdqlGroups(querriesGroupsCsvFile):
     # Читаем информацию о группах для запросов из файла pdql_groups_manifest.csv
     logging.info('Вызвана функция createPdqlGroups для создания групп PDQL запросов из файла pdql_groups_manifest.csv.')
-
     with open(querriesGroupsCsvFile, 'r', newline='', encoding='utf-8') as pdqGroupslManifestFile:
         csvReader = csv.reader(pdqGroupslManifestFile, delimiter=';')   # Создаем читатель CSV
         next(csvReader)                                                 # Пропускаем заголовок (первую строку)                               
@@ -327,7 +326,7 @@ def createPdqlGroups(querriesGroupsCsvFile):
             logging.info(f'Выполняется чтение параметров для создания группы PDQL запросов: {row[0]}')
             print(f'Выполняется чтение параметров для создания группы PDQL запросов: {row[0]}')
             parentIdTemp = querriesGroupsDictionary.get(row[1])
-            if parentIdTemp is None: parentIdTemp = findQuerriesGroupId(row[1], querriesGroupsJsonFile)
+            if parentIdTemp is None: parentIdTemp = findQuerriesGroupId(querriesGroupsJsonFile, row[1])
             #Параметры группы из текущей строки
             rowData = {
                 "displayName": row[0],
@@ -363,17 +362,19 @@ def createPdqlQueries(querriesCsvFile):
     with open(querriesCsvFile, 'r', newline='', encoding='utf-8') as pdqlQueriesFile:
         csvReader = csv.reader(pdqlQueriesFile, delimiter=';')
         next(csvReader)
-
         headers = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {bearerToken}"
         }
         for row in csvReader:
+            logging.info(f"Выполняется чтение параметров для PDQL запроса: {row[0]}")
             print(f"Выполняется чтение параметров для PDQL запроса: {row[0]}")
+            parentIdTemp = querriesGroupsDictionary.get(row[2])
+            if parentIdTemp is None: parentIdTemp = findQuerriesGroupId(querriesGroupsJsonFile, row[2])
             rowData = {
                 "displayName": row[0],
                 "filterPdql": row[1],
-                "folderId": row[2],
+                "folderId": parentIdTemp,
                 "isDeleted": "false",
                 "isInvalid": "false",
                 "selectionPdql": row[5],
@@ -406,7 +407,7 @@ currentDirectory = os.path.dirname(os.path.abspath(__file__))                   
 manifestsDirectory = os.path.join(currentDirectory, 'deployment_manifests')             #директория с манифестами
 groupsCsvFile = os.path.join(manifestsDirectory, "assets_groups_manifest.csv")          #манифест с настройками групп активов
 querriesGroupsCsvFile = os.path.join(manifestsDirectory, "pdql_groups_manifest.csv")    #манифест с настройками групп PDQL запросов
-querriesCsvFile = os.path.join(manifestsDirectory, "pdql_manifest.csv")                 #манифест с настройками PDQL запросов
+querriesCsvFile = os.path.join(manifestsDirectory, "pdql_queries_manifest.csv")                 #манифест с настройками PDQL запросов
 querriesGroupsJsonFile = os.path.join(manifestsDirectory, "groupsOfQuerries.json")      #файл, куда скачаваем информацию о группах PDQL запросов
 
 #логирование ошибок
